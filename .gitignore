@@ -4,7 +4,11 @@
 .env.prod
 
 # Reports
-reports/
+reports/*
+!reports/.gitkeep
+!reports/allure-results/
+reports/allure-results/*
+!reports/allure-results/.gitkeep
 __pycache__/
 *.pyc
 .pytest_cache/
