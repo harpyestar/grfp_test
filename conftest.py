@@ -65,11 +65,12 @@ async def page(browser_context: BrowserContext) -> Page:
 
 
 def pytest_configure(config):
-    """pytest 启动时执行"""
+    """pytest 启动时执行 - access our config via the global import"""
+    from utils.config import config as app_config
     logger.info("=" * 80)
     logger.info("GRFP UI Test Suite Started")
-    logger.info(f"Environment: {config.test_env}")
-    logger.info(f"Base URL: {config.base_url}")
+    logger.info(f"Environment: {app_config.test_env}")
+    logger.info(f"Base URL: {app_config.base_url}")
     logger.info("=" * 80)
 
 
