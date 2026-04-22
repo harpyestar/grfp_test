@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture
-async def login_page(page: Page) -> LoginPage:
+def login_page(page):
     """
     登录页 fixture
     返回 LoginPage 对象，用于测试登录功能

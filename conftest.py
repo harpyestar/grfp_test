@@ -5,67 +5,108 @@
 
 import pytest
 import asyncio
-from playwright.async_api import async_playwright, Browser, BrowserContext, Page
+from playwright.async_api import async_playwright
 from utils.config import config
 from utils.logger import get_logger
 
 logger = get_logger("conftest", config.log_level)
 
+# 全局变量
+_playwright = None
+_browser = None
+_event_loop = None
+
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """创建事件循环（pytest-asyncio）"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    """创建会话级事件循环"""
+    global _event_loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    _event_loop = loop
     yield loop
     loop.close()
 
 
 @pytest.fixture(scope="session")
-async def browser() -> Browser:
+def browser(event_loop):
     """
     浏览器 fixture（会话级）
     启动 Chromium 浏览器，在所有测试结束后关闭
     """
-    logger.info("Starting browser")
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
+    global _playwright, _browser
+
+    async def launch_browser():
+        global _playwright
+        logger.info("Initializing Playwright")
+        _playwright = await async_playwright().start()
+        logger.info("Starting browser")
+        browser = await _playwright.chromium.launch(
             headless=config.headless,
             slow_mo=config.slow_mo
         )
         logger.info(f"Browser launched - Headless: {config.headless}, SlowMo: {config.slow_mo}ms")
-        yield browser
+        return browser
+
+    logger.info("Creating browser fixture")
+    _browser = event_loop.run_until_complete(launch_browser())
+    yield _browser
+
+    # Cleanup
+    async def close_browser():
+        global _browser, _playwright
         logger.info("Closing browser")
-        await browser.close()
+        await _browser.close()
+        logger.info("Stopping Playwright")
+        await _playwright.stop()
+
+    event_loop.run_until_complete(close_browser())
 
 
 @pytest.fixture
-async def browser_context(browser: Browser) -> BrowserContext:
+def browser_context(browser, event_loop):
     """
     浏览器上下文 fixture（测试级）
     每个测试获得独立的浏览器上下文
     """
-    logger.info("Creating new browser context")
-    context = await browser.new_context()
+    async def create_context():
+        logger.info("Creating new browser context")
+        return await browser.new_context()
+
+    context = event_loop.run_until_complete(create_context())
     yield context
-    logger.info("Closing browser context")
-    await context.close()
+
+    # Cleanup
+    async def close_context():
+        logger.info("Closing browser context")
+        await context.close()
+
+    event_loop.run_until_complete(close_context())
 
 
 @pytest.fixture
-async def page(browser_context: BrowserContext) -> Page:
+def page(browser_context, event_loop):
     """
     页面 fixture（测试级）
     每个测试获得独立的页面
     """
-    logger.info("Creating new page")
-    page = await browser_context.new_page()
+    async def create_page():
+        logger.info("Creating new page")
+        return await browser_context.new_page()
+
+    page = event_loop.run_until_complete(create_page())
     yield page
-    logger.info("Closing page")
-    await page.close()
+
+    # Cleanup
+    async def close_page():
+        logger.info("Closing page")
+        await page.close()
+
+    event_loop.run_until_complete(close_page())
 
 
 def pytest_configure(config):
-    """pytest 启动时执行 - access our config via the global import"""
+    """pytest 启动时执行"""
     from utils.config import config as app_config
     logger.info("=" * 80)
     logger.info("GRFP UI Test Suite Started")

@@ -1,17 +1,17 @@
 {
-  "operate": {
-    "email": "yaohui.zheng@fangcang.com",
-    "password": "666666",
-    "role_name": "Operate"
+  "test": {
+    "operate":    { "email": "yaohui.zheng@fangcang.com", "password": "666666", "role_name": "Operate" },
+    "hotel":      { "email": "hzxgll@qq.com",             "password": "666666", "role_name": "Hotel" },
+    "hotelgroup": { "email": "jiudianjt@qq.com",          "password": "666666", "role_name": "HotelGroup" }
   },
-  "hotel": {
-    "email": "hzxgll@qq.com",
-    "password": "666666",
-    "role_name": "Hotel"
+  "pre": {
+    "operate":    { "email": "", "password": "", "role_name": "Operate" },
+    "hotel":      { "email": "", "password": "", "role_name": "Hotel" },
+    "hotelgroup": { "email": "", "password": "", "role_name": "HotelGroup" }
   },
-  "hotelgroup": {
-    "email": "jiudianjt@qq.com",
-    "password": "666666",
-    "role_name": "HotelGroup"
+  "prod": {
+    "operate":    { "email": "", "password": "", "role_name": "Operate" },
+    "hotel":      { "email": "", "password": "", "role_name": "Hotel" },
+    "hotelgroup": { "email": "", "password": "", "role_name": "HotelGroup" }
   }
 }

@@ -1,20 +1,22 @@
 """
 登录页面对象模型
 处理登录相关的交互操作
+所有超时值从 timeout_config 中读取，确保与 .env 配置一致
 """
 
 from playwright.async_api import Page
 from pages.common.base_page import BasePage
 from utils.config import config
+from utils.timeout_config import timeout_config
 from typing import Dict, Any
 
 
 class LoginPage(BasePage):
     """登录页 Page Object"""
 
-    EMAIL_INPUT = 'input[type="text"], input[type="email"]'
+    EMAIL_INPUT = 'input[type="text"]'  # Email field is type="text", not type="email"
     PASSWORD_INPUT = 'input[type="password"]'
-    LOGIN_BUTTON = 'button[type="submit"], button:has-text("Login")'
+    LOGIN_BUTTON = 'button:has-text("Login")'  # Button has text "Login", not type="submit"
     LOGIN_FORM = 'form'
 
     def __init__(self, page: Page):
@@ -22,13 +24,26 @@ class LoginPage(BasePage):
 
     async def navigate_to_login(self) -> None:
         self.logger.info("Navigating to login page")
-        await self.goto(config.base_url)
+        # 直接导航到 /login 路径
+        login_url = config.base_url.rstrip('/') + '/login'
+        self.logger.info(f"Login URL: {login_url}")
 
-        await self.wait_helper.wait_for_selector(
-            self.page,
-            self.LOGIN_FORM,
-            timeout=config.timeout_page_load
-        )
+        # 使用 commit 只等服务器开始响应，不等待所有资源/网络活动
+        # 避免 Vue.js SPA 的后台请求导致 networkidle/load 永远无法触发
+        await self.page.goto(login_url, wait_until="commit", timeout=timeout_config.get_navigation_timeout())
+        self.logger.info("Server responded, waiting for form elements...")
+
+        # 等待登录表单或输入框出现
+        try:
+            await self.wait_helper.wait_for_selector(
+                self.page,
+                'form, input[type="text"], input[type="password"]',  # 邮箱和密码输入框
+                timeout=timeout_config.get_element_timeout()
+            )
+            self.logger.info("Login form elements rendered successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to find form elements: {e}")
+            raise
 
     async def login(self, email: str, password: str) -> Dict[str, Any]:
         try:
@@ -46,16 +61,11 @@ class LoginPage(BasePage):
             await self.click(self.LOGIN_BUTTON)
 
             self.logger.debug("Waiting for login to complete")
+            # 等待 URL 变更到 /home
             await self.wait_helper.wait_for_url(
                 self.page,
                 "**/home",
-                timeout=config.timeout_navigation
-            )
-
-            await self.wait_helper.wait_for_load_state(
-                self.page,
-                state="networkidle",
-                timeout=config.timeout_page_load
+                timeout=timeout_config.get_navigation_timeout()
             )
 
             current_url = await self.get_current_url()
@@ -82,3 +92,4 @@ class LoginPage(BasePage):
         is_visible = await self.is_visible(self.LOGIN_FORM)
         self.logger.debug(f"Is login page: {is_visible}")
         return is_visible
+

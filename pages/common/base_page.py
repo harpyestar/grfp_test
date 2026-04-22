@@ -1,11 +1,13 @@
 """
 Page Object Model 基类
 封装所有页面通用的交互操作
+所有超时值从 timeout_config 中读取，确保与 .env 配置一致
 """
 
 from playwright.async_api import Page, expect
 from utils.logger import get_logger
 from utils.wait_helper import WaitHelper
+from utils.timeout_config import timeout_config
 from utils.config import config
 from typing import Optional, Any
 
@@ -20,19 +22,24 @@ class BasePage:
 
     async def goto(self, url: str) -> None:
         self.logger.info(f"Navigating to {url}")
-        await self.page.goto(url, wait_until="networkidle")
-        await self.wait_helper.wait_for_load_state(
-            self.page,
-            state="networkidle",
-            timeout=config.timeout_page_load
-        )
+        # 使用 domcontentloaded 替代 networkidle，减少卡顿风险
+        await self.page.goto(url, wait_until="domcontentloaded")
+        # 仅在必要时等待网络空闲（可选，用于后续交互）
+        try:
+            await self.wait_helper.wait_for_load_state(
+                self.page,
+                state="domcontentloaded",
+                timeout=timeout_config.get_element_timeout()
+            )
+        except Exception as e:
+            self.logger.warning(f"DomContentLoaded wait raised: {str(e)}, continuing...")
 
     async def find_element(self, selector: str) -> Any:
         self.logger.debug(f"Finding element: {selector}")
         await self.wait_helper.wait_for_selector(
             self.page,
             selector,
-            timeout=config.timeout_element
+            timeout=timeout_config.get_element_timeout()
         )
         return self.page.locator(selector)
 
@@ -79,3 +86,4 @@ class BasePage:
     async def screenshot(self, path: str) -> None:
         self.logger.info(f"Taking screenshot: {path}")
         await self.page.screenshot(path=path, full_page=True)
+
