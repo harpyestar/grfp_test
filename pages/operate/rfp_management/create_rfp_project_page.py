@@ -508,12 +508,15 @@ class CreateNewRFPProjectPage(BasePage):
                 self.logger.info("Project 搜索框已点击")
 
                 # Step 2: 等待并输入项目名称
-                await self.page.wait_for_timeout(200)
+                await self.page.wait_for_timeout(300)
                 self.logger.debug(f"输入项目名称: {project_name}")
-                search_input = self.page.get_by_placeholder("请输入项目名称")
-                if await search_input.is_visible():
-                    await search_input.fill(project_name)
-                    self.logger.info(f"项目名称已输入: {project_name}")
+                # 使用精准定位：外层+内层
+                # 在 project_filter 内部找到 class="el-input__inner" 的 input
+                search_input = project_filter.locator("input.el-input__inner")
+                await search_input.clear()
+                await search_input.fill(project_name)
+                await self.page.wait_for_timeout(200)
+                self.logger.info(f"项目名称已输入: {project_name}")
 
                 # Step 3: 点击搜索按钮
                 self.logger.debug("点击搜索按钮")
@@ -524,7 +527,7 @@ class CreateNewRFPProjectPage(BasePage):
                 # Step 4: 等待搜索结果加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach(f"搜索项目: {project_name}", "搜索操作")
-                self.logger.info(f"✅ 项目搜索完成")
+                self.logger.info("[OK] 项目搜索完成")
 
             except Exception as e:
                 error_msg = f"搜索项目失败: {str(e)}"
