@@ -69,88 +69,122 @@ python+Playwright（pytest-playwright）+allure
 
 ```
 grfp-ui-test/
+├── .env                              # 本地环境配置
+├── .gitignore                        # git 忽略规则
+├── CLAUDE.md                         # 项目内容记录与指导
+├── IMPLEMENTATION_SUMMARY.md         # 项目实现总结
 ├── conftest.py                       # 根级 conftest（浏览器生命周期管理）
 ├── pytest.ini                        # pytest 全局配置
 ├── requirements.txt                  # 项目依赖（pytest, playwright, allure...）
-├── CLAUDE.md                         # 项目内容记录与指导
 ├── run.py                            # 测试运行脚本
-├── .env                              # 本地环境配置
+├── explore_rfp_form.py               # 表单页面探索脚本
 │
 ├── docs/                             # 文档目录
-│   ├── README.md                     # 项目使用文档
 │   ├── DESIGN.md                     # 项目设计文档
-│   └── IMPLEMENTATION_PLAN.md        # 实现计划文档
+│   ├── IMPLEMENTATION_PLAN.md        # 实现计划文档
+│   ├── README.md                     # 项目使用文档
+│   ├── 需求描述.md                   # 业务需求文档
+│   ├── 文件记录/                     # 对话历史记录
+│   │   └── 2026年4月23日-对话记录
+│   └── superpowers/                  # 超级能力相关文件
+│       ├── plans/
+│       │   └── 2026-04-10-create-rfp-project-plan.md
+│       └── specs/
+│           └── 2026-04-10-create-rfp-project-design.md
 │
 ├── pages/                            # Page Object Models（按角色分类）
+│   ├── __init__.py
 │   ├── common/
-│   │   ├── base_page.py              # POM 基类（11 个通用交互方法）
-│   │   └── login_page.py             # 登录页 POM
+│   │   ├── __init__.py
+│   │   ├── base_page.py              # ✅ POM 基类（11 个通用交互方法）
+│   │   └── login_page.py             # ✅ 登录页 POM
 │   │
-│   ├── operate/                      # 运营端功能页
+│   ├── operate/                      # ✅ 运营端功能页
+│   │   ├── __init__.py
 │   │   ├── admin/
 │   │   ├── ai_import/
-│   │   ├── bidding_management/
-│   │   ├── contracting/
 │   │   ├── organization/
 │   │   ├── poi_management/
 │   │   └── rfp_management/
+│   │       ├── __init__.py
+│   │       └── create_rfp_project_page.py  # ✅ RFP 项目创建页 POM
 │   │
 │   ├── hotel/                        # 酒店端功能页
-│   │   ├── home/
+│   │   ├── __init__.py
 │   │   ├── contracting/
+│   │   ├── home/
 │   │   ├── organization/
 │   │   ├── system_config/
 │   │   └── user_management/
 │   │
 │   └── hotel_group/                  # 酒店集团端功能页
-│       ├── home/
+│       ├── __init__.py
 │       ├── contracting/
+│       ├── home/
+│       ├── menu_permission/
 │       ├── organization/
-│       ├── user_management/
-│       └── menu_permission/
+│       └── user_management/
 │
 ├── tests/                            # 测试用例
+│   ├── __init__.py
 │   ├── conftest.py                   # 测试级配置（参数化、fixtures）
-│   ├── auth/
-│   │   └── test_login.py             # ✅ 登录测试（9 个用例: 3×3 参数化）
+│   │
+│   ├── auth/                         # 认证测试
+│   │   ├── __init__.py
+│   │   └── test_login.py             # ✅ 登录测试（9 个用例: 3 角色 × 3 操作）
 │   │
 │   ├── operate/                      # 运营端测试
+│   │   ├── __init__.py
 │   │   ├── admin/
-│   │   ├── bidding_management/
-│   │   ├── evaluation/
 │   │   ├── organization/
-│   │   └── project_management/
+│   │   └── rfp_management/
+│   │       ├── __init__.py
+│   │       ├── conftest.py           # ✅ RFP 管理测试配置
+│   │       └── test_create_rfp_project.py  # ✅ RFP 项目创建测试
 │   │
 │   ├── hotel/                        # 酒店端测试
-│   │   ├── home/
+│   │   ├── __init__.py
 │   │   ├── contracting/
+│   │   ├── home/
 │   │   ├── organization/
 │   │   ├── system_config/
 │   │   └── user_management/
 │   │
 │   ├── hotel_group/                  # 酒店集团端测试
-│   │   ├── home/
+│   │   ├── __init__.py
 │   │   ├── contracting/
+│   │   ├── home/
+│   │   ├── menu_permission/
 │   │   ├── organization/
-│   │   ├── user_management/
-│   │   └── menu_permission/
+│   │   └── user_management/
 │   │
 │   └── e2e/                          # 端到端测试
+│       └── __init__.py
 │
-├── data/
+├── data/                             # 数据管理
+│   ├── __init__.py
 │   ├── test_accounts.json            # ✅ 三角色账号数据
-│   └── fixtures/
-│       └── accounts.py               # ✅ pytest fixtures
+│   ├── fixtures/
+│   │   ├── __init__.py
+│   │   └── accounts.py               # ✅ pytest fixtures
+│   └── test_cases/
+│       ├── __init__.py
+│       └── rfp_management_params.json # ✅ RFP 管理参数化数据
 │
-├── utils/
+├── utils/                            # 工具函数
+│   ├── __init__.py
 │   ├── config.py                     # ✅ 配置管理（.env + test_accounts.json）
 │   ├── logger.py                     # ✅ 日志工具（Logger 单例）
-│   ├── wait_helper.py                # ✅ 等待工具（异步 Playwright 等待）
-│   └── timeout_config.py             # ✅ 超时配置管理类
+│   ├── test_data_loader.py           # ✅ 参数化测试数据加载器
+│   ├── timeout_config.py             # ✅ 超时配置管理类
+│   └── wait_helper.py                # ✅ 等待工具（异步 Playwright 等待）
 │
-└── reports/
-    ├── .gitkeep                      # 报告目录占位符
-    └── allure-results/               # Allure 报告输出
+└── reports/                          # 测试报告
+    ├── .gitkeep
+    ├── allure-results/               # Allure 报告输出
+    │   └── .gitkeep
+    └── logs/                         # 测试日志
+        └── .gitkeep
 ```
 
 ### 关键设计特点
@@ -163,6 +197,34 @@ grfp-ui-test/
 | 异步支持 | 完整的 Playwright async/await 集成 |
 | POM 模式 | 清晰的 Page Object Model 分层 |
 | 详细日志 | Logger 单例模式，便于调试 |
+
+---
+
+## 📋 项目演进记录
+
+### 已实现功能清单
+
+| 功能模块 | 状态 | 说明 |
+|---------|------|------|
+| **基础框架** | ✅ | POM 基类、conftest、pytest 配置、日志系统 |
+| **认证功能** | ✅ | 登录页面、三角色登录测试（9 个用例参数化） |
+| **RFP 项目管理** | ✅ | 创建 RFP 项目页面 POM、创建流程测试用例、参数化测试数据加载 |
+| **超时管理** | ✅ | 统一超时配置、避免硬编码 |
+| **元素定位规范** | ✅ | 定位器集中管理、支持多种定位方式 |
+| **参数化测试数据** | ✅ | test_accounts.json（角色账户）、rfp_management_params.json（RFP 参数） |
+| **文档系统** | ✅ | 需求描述、设计文档、实现计划、使用指南 |
+
+### 待实现功能
+
+| 功能模块 | 优先级 | 备注 |
+|---------|------|------|
+| 邀约酒店管理页面与测试 | P1 | 需要实现页面 POM 和对应测试 |
+| 报价管理页面与测试 | P1 | 酒店端提交报价流程 |
+| 评标管理页面与测试 | P1 | 运营端查看报价和评标 |
+| 机构管理页面与测试 | P2 | 组织、部门、员工、签约主体管理 |
+| POI 管理页面与测试 | P2 | POI 绑定、解绑、地图配置 |
+| 系统配置页面与测试 | P2 | 系统参数配置 |
+| 端到端测试 | P3 | 完整业务流程串联测试 |
 
 ---
 
