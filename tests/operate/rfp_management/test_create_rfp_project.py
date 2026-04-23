@@ -27,8 +27,14 @@ class TestCreateRFPProject:
     @allure.description("""
     测试: Operate 角色成功创建新 RFP 项目，填写所有必填字段并保存
 
+    登录状态复用：
+    - 所有参数化用例共享同一登录状态（Module 级）
+    - 首次执行 operate_user fixture 时登录一次
+    - 后续用例复用此登录状态，无需重复登录
+    - 提升测试执行效率
+
     测试步骤:
-    1. 使用 operate 角色账号登录 (fixture 自动完成)
+    1. 使用 operate 角色账号登录 (fixture 自动完成，仅一次)
     2. 导航至 Create new RFP project 页面
     3. 填写项目基本信息 (组织、项目名、联系人、电话)
     4. 选择签约方式和通知方式
@@ -40,17 +46,17 @@ class TestCreateRFPProject:
 
     预期结果: 保存成功，显示成功提示信息
     """)
-    async def test_create_rfp_project_success(self, page, operate_user, test_data):
+    async def test_create_rfp_project_success(self, page_module, operate_user, test_data):
         """
-        参数化的 RFP 项目创建流程测试
+        参数化的 RFP 项目创建流程测试（登录状态复用）
 
         Args:
-            page: Playwright Page 对象 (fixture 提供)
+            page_module: Module 级 page 对象 - 所有参数化用例共享（Module 级登录状态）
             operate_user: Operate 角色登录 fixture (来自 conftest.py)
             test_data: 参数化测试数据 (来自 rfp_management_params.json)
         """
         # 初始化 POM 类
-        create_page = CreateNewRFPProjectPage(page)
+        create_page = CreateNewRFPProjectPage(page_module)
 
         with allure.step(f"用例: {test_data['description']}"):
             # Step 1: 导航至创建页面
@@ -95,4 +101,31 @@ class TestCreateRFPProject:
                 "测试结果",
                 allure.attachment_type.TEXT
             )
+
+        # ========== 清理数据部分：删除创建的项目 ==========
+        with allure.step(f"清理数据：删除项目 {project_name}"):
+            try:
+                # 调用 POM 中的完整删除方法
+                await create_page.delete_project_by_name(project_name)
+
+                # Allure 清理报告
+                allure.attach(
+                    f"数据清理成功\n"
+                    f"删除项目: {project_name}\n"
+                    f"操作: Void\n"
+                    f"状态: 已确认",
+                    "清理结果",
+                    allure.attachment_type.TEXT
+                )
+
+            except Exception as e:
+                error_msg = f"清理数据失败: {str(e)}"
+                allure.attach(
+                    f"清理数据失败\n"
+                    f"项目名称: {project_name}\n"
+                    f"错误: {error_msg}",
+                    "清理失败",
+                    allure.attachment_type.TEXT
+                )
+                raise
 

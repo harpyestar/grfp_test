@@ -12,6 +12,7 @@ from utils.logger import get_logger
 from datetime import datetime
 import random
 import allure
+import re
 
 
 class CreateNewRFPProjectPage(BasePage):
@@ -52,6 +53,21 @@ class CreateNewRFPProjectPage(BasePage):
     # ========== 提交和结果 ==========
     SAVE_BUTTON_NAME = "Save"
     SUCCESS_MESSAGE_SELECTOR = ".el-message__content"
+
+    # ========== Contracting 页面元素 ==========
+    # 菜单项
+    CONTRACTING_MENU_TEXT = "Contracting"
+    # 标签页
+    NOT_STARTED_TAB_NAME = "Not Started"
+    # 搜索框定位
+    PROJECT_SEARCH_FILTER_PATTERN = r"^Project$"  # 用于 filter 的正则
+    PROJECT_SEARCH_FILTER_NTH = 1  # 第几个匹配项
+    # 搜索按钮
+    SEARCH_BUTTON_SELECTOR = ".search > .btn"
+    # 删除/作废按钮
+    VOID_BUTTON_TEXT = "Void"
+    # 确认按钮
+    CONFIRM_YES_TEXT = "Yes"
 
     def __init__(self, page: Page):
         super().__init__(page)
@@ -418,3 +434,159 @@ class CreateNewRFPProjectPage(BasePage):
                 self.logger.error(error_msg)
                 allure.attach(error_msg, "验证错误")
                 return False
+
+    # ========== 清理/删除相关方法 ==========
+    async def navigate_to_contracting(self) -> None:
+        """导航至 Contracting 页面"""
+        self.logger.info("开始导航至 Contracting 页面")
+
+        with allure.step("导航至 Contracting 页面"):
+            try:
+                # Step 1: 点击 RFP Management 菜单
+                self.logger.debug("点击 RFP Management 菜单")
+                rfp_menu = self.page.get_by_role("button", name=self.RFP_MANAGEMENT_MENU_NAME)
+                await rfp_menu.click()
+                self.logger.info("RFP Management 菜单已点击")
+
+                # Step 2: 等待下拉菜单
+                await self.page.wait_for_timeout(300)
+
+                # Step 3: 点击 Contracting 菜单项
+                self.logger.debug(f"点击 {self.CONTRACTING_MENU_TEXT} 菜单项")
+                contracting_menu = self.page.get_by_label(self.RFP_MANAGEMENT_MENU_NAME).get_by_text(
+                    self.CONTRACTING_MENU_TEXT
+                )
+                await contracting_menu.click()
+                self.logger.info("Contracting 菜单项已点击")
+
+                # Step 4: 等待页面加载
+                await self.page.wait_for_load_state("networkidle")
+                allure.attach("Contracting 页面已加载", "导航结果")
+                self.logger.info("✅ Contracting 页面加载完成")
+
+            except Exception as e:
+                error_msg = f"导航至 Contracting 页面失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "导航错误")
+                raise
+
+    async def click_not_started_tab(self) -> None:
+        """点击 Not Started Tab"""
+        self.logger.info("开始点击 Not Started Tab")
+
+        with allure.step(f"选择 {self.NOT_STARTED_TAB_NAME} Tab"):
+            try:
+                # 点击 Not Started Tab
+                self.logger.debug(f"定位 {self.NOT_STARTED_TAB_NAME} Tab")
+                not_started_tab = self.page.get_by_role("tab", name=self.NOT_STARTED_TAB_NAME)
+                await not_started_tab.click()
+                self.logger.info("Not Started Tab 已点击")
+
+                # 等待表格加载
+                await self.page.wait_for_load_state("networkidle")
+                allure.attach(f"已选择: {self.NOT_STARTED_TAB_NAME}", "Tab 选择")
+                self.logger.info(f"✅ {self.NOT_STARTED_TAB_NAME} Tab 加载完成")
+
+            except Exception as e:
+                error_msg = f"点击 Not Started Tab 失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "点击错误")
+                raise
+
+    async def search_project_by_name(self, project_name: str) -> None:
+        """通过项目名称搜索项目"""
+        self.logger.info(f"开始搜索项目: {project_name}")
+
+        with allure.step(f"搜索项目: {project_name}"):
+            try:
+                # Step 1: 点击 Project 搜索框 (使用 locator + filter)
+                self.logger.debug("定位 Project 搜索框")
+                project_filter = self.page.locator("div").filter(
+                    has_text=re.compile(self.PROJECT_SEARCH_FILTER_PATTERN)
+                ).nth(self.PROJECT_SEARCH_FILTER_NTH)
+                await project_filter.click()
+                self.logger.info("Project 搜索框已点击")
+
+                # Step 2: 等待并输入项目名称
+                await self.page.wait_for_timeout(200)
+                self.logger.debug(f"输入项目名称: {project_name}")
+                search_input = self.page.get_by_placeholder("请输入项目名称")
+                if await search_input.is_visible():
+                    await search_input.fill(project_name)
+                    self.logger.info(f"项目名称已输入: {project_name}")
+
+                # Step 3: 点击搜索按钮
+                self.logger.debug("点击搜索按钮")
+                search_btn = self.page.locator(self.SEARCH_BUTTON_SELECTOR)
+                await search_btn.click()
+                self.logger.info("搜索按钮已点击")
+
+                # Step 4: 等待搜索结果加载
+                await self.page.wait_for_load_state("networkidle")
+                allure.attach(f"搜索项目: {project_name}", "搜索操作")
+                self.logger.info(f"✅ 项目搜索完成")
+
+            except Exception as e:
+                error_msg = f"搜索项目失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "搜索错误")
+                raise
+
+    async def void_first_project(self) -> None:
+        """删除/作废表格中第一条项目"""
+        self.logger.info("开始删除表格中第一条项目")
+
+        with allure.step("删除项目"):
+            try:
+                # Step 1: 找到第一个 Void 按钮
+                self.logger.debug(f"查找 {self.VOID_BUTTON_TEXT} 按钮")
+                void_buttons = self.page.get_by_text(self.VOID_BUTTON_TEXT)
+                first_void_btn = void_buttons.first
+                await first_void_btn.click()
+                self.logger.info("Void 按钮已点击")
+
+                # Step 2: 等待确认弹窗出现
+                await self.page.wait_for_timeout(500)
+
+                # Step 3: 点击确认按钮 (Yes)
+                self.logger.debug("点击确认弹窗中的 Yes 按钮")
+                yes_buttons = self.page.get_by_text(self.CONFIRM_YES_TEXT)
+                first_yes_btn = yes_buttons.first
+                await first_yes_btn.click()
+                self.logger.info("Yes 确认按钮已点击")
+
+                # Step 4: 等待操作完成
+                await self.page.wait_for_load_state("networkidle")
+                allure.attach("项目已删除", "删除结果")
+                self.logger.info("✅ 项目删除完成")
+
+            except Exception as e:
+                error_msg = f"删除项目失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "删除错误")
+                raise
+
+    async def delete_project_by_name(self, project_name: str) -> None:
+        """完整的项目删除流程"""
+        self.logger.info(f"开始执行项目删除流程: {project_name}")
+
+        with allure.step(f"完整删除项目: {project_name}"):
+            try:
+                # 1. 导航到 Contracting 页面
+                await self.navigate_to_contracting()
+
+                # 2. 选择 Not Started Tab
+                await self.click_not_started_tab()
+
+                # 3. 搜索项目
+                await self.search_project_by_name(project_name)
+
+                # 4. 删除项目
+                await self.void_first_project()
+
+                self.logger.info(f"✅ 项目删除流程完成: {project_name}")
+            except Exception as e:
+                error_msg = f"项目删除流程失败: {str(e)}"
+                self.logger.error(error_msg)
+                raise
+
