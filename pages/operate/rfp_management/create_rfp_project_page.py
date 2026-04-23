@@ -18,8 +18,8 @@ class CreateNewRFPProjectPage(BasePage):
     """创建新 RFP 项目 Page Object"""
 
     # ========== 导航菜单元素 ==========
-    RFP_MANAGEMENT_MENU = "text=RFP Management"
-    CREATE_NEW_RFP_PROJECT_MENU = "text=Create new RFP project"
+    RFP_MANAGEMENT_MENU_NAME = "RFP Management"
+    CREATE_NEW_RFP_PROJECT_MENU_TEXT = "Create new RFP project"
     ORG_NAME_LABEL_WAIT = "Organization Name"  # 用于 wait_for 的 label 文本
 
     # ========== 表单输入框（使用 getByLabel 定位） ==========
@@ -35,36 +35,16 @@ class CreateNewRFPProjectPage(BasePage):
     EXPECTED_HOTELS_COUNT_LABEL = "Expected number of contracted hotels"
 
     # ========== 单选框元素（通过 label 文本定位） ==========
-    # 签约方式 label 及其 Private RFP 选项
+    # 签约方式 label
     METHOD_OF_SIGNING_LABEL = "Method of Signing"
-    PRIVATE_RFP_VALUE = "2"
 
-    # 通知方式 label 及其 Manual Notification 选项
-    NOTIFICATION_METHOD_LABEL = "Signing Status Notification"
-    MANUAL_NOTIFICATION_VALUE = "0"
-
-    # 报价报告设置 labels 及其 NO NEED 选项
+    # 报价报告设置 labels
     GROUP_QUOTATION_LABEL = "GROUP QUOTATION STATUS REPORT"
-    GROUP_QUOTATION_VALUE = "0"
-
     ENTERPRISE_QUOTATION_LABEL = "Enterprise Quotation Status Report"
-    ENTERPRISE_QUOTATION_VALUE = "0"
-
-    # ========== 日期选择器 ==========
-    # 所有日期选择器共用 placeholder，通过索引区分（3个范围，每个范围2个字段）
-    DATE_PICKER_PLACEHOLDER = "Please select"
-    # 日期范围索引
-    BIDDING_DATE_START_IDX = 0
-    BIDDING_DATE_END_IDX = 1
-    REGISTRATION_START_IDX = 2
-    REGISTRATION_END_IDX = 3
-    FIRST_ROUND_START_IDX = 4
-    FIRST_ROUND_END_IDX = 5
 
     # ========== 电话号码输入框 ==========
-    # 所有 "Please enter" placeholder 共用，通过索引区分
-    PHONE_PLACEHOLDER = "Please enter"
-    PHONE_INPUT_IDX = 0  # 电话号码是第一个 "Please enter" 框
+    # 使用 getByRole("textbox", name="Please enter") 定位
+    PHONE_INPUT_NAME = "Please enter"
 
     # ========== 自动完成下拉菜单 ==========
     AUTOCOMPLETE_ITEM_SELECTOR = ".el-select-dropdown__item"
@@ -72,11 +52,6 @@ class CreateNewRFPProjectPage(BasePage):
     # ========== 提交和结果 ==========
     SAVE_BUTTON_NAME = "Save"
     SUCCESS_MESSAGE_SELECTOR = ".el-message__content"
-
-    # ========== 单选框调试定位器 ==========
-    # 用于调试所有 radio 按钮
-    ALL_RADIOS_SELECTOR = "input[type='radio']"
-    METHOD_LABELS_SELECTOR = "label:has-text('Method')"
 
     def __init__(self, page: Page):
         super().__init__(page)
@@ -98,24 +73,20 @@ class CreateNewRFPProjectPage(BasePage):
 
         with allure.step("导航至 RFP Management > Create new RFP project"):
             try:
-                # 1. 点击 RFP Management 菜单
-                self.logger.debug(f"点击 RFP Management 菜单: {self.RFP_MANAGEMENT_MENU}")
-                rfp_menu = await self.find_element(self.RFP_MANAGEMENT_MENU)
+                # 1. 点击 RFP Management 菜单按钮
+                self.logger.debug(f"点击 RFP Management 菜单: {self.RFP_MANAGEMENT_MENU_NAME}")
+                rfp_menu = self.page.get_by_role("button", name=self.RFP_MANAGEMENT_MENU_NAME)
                 await rfp_menu.click()
                 self.logger.info("RFP Management 菜单已点击")
 
                 # 2. 等待下拉菜单出现
                 self.logger.debug("等待下拉菜单出现")
-                await self.wait_helper.wait_for_selector(
-                    self.page,
-                    self.CREATE_NEW_RFP_PROJECT_MENU,
-                    timeout=timeout_config.get_element_timeout()
-                )
+                await self.page.wait_for_timeout(300)
                 self.logger.info("下拉菜单已出现")
 
                 # 3. 点击 Create new RFP project
-                self.logger.debug(f"点击 Create new RFP project: {self.CREATE_NEW_RFP_PROJECT_MENU}")
-                create_menu = await self.find_element(self.CREATE_NEW_RFP_PROJECT_MENU)
+                self.logger.debug(f"点击 Create new RFP project: {self.CREATE_NEW_RFP_PROJECT_MENU_TEXT}")
+                create_menu = self.page.get_by_text(self.CREATE_NEW_RFP_PROJECT_MENU_TEXT)
                 await create_menu.click()
                 self.logger.info("Create new RFP project 菜单项已点击")
 
@@ -221,15 +192,11 @@ class CreateNewRFPProjectPage(BasePage):
                 await area_input.fill(area_code)
                 self.logger.debug(f"区号填写成功: {area_code}")
 
-                # 填写电话号码 - 获取所有 "Please enter" 占位符的输入框
-                all_please_enter = await self.page.get_by_placeholder(self.PHONE_PLACEHOLDER).all()
-                if len(all_please_enter) > self.PHONE_INPUT_IDX:
-                    phone_input = all_please_enter[self.PHONE_INPUT_IDX]
-                    await phone_input.fill(phone)
-                    self.logger.debug(f"电话号码填写成功: {phone}")
-                else:
-                    self.logger.warning(f"找不到电话号码输入框，期望索引 {self.PHONE_INPUT_IDX}，实际找到 {len(all_please_enter)} 个")
-                    raise Exception(f"电话号码输入框不足，期望索引 {self.PHONE_INPUT_IDX}，实际找到 {len(all_please_enter)} 个")
+                # 填写电话号码 - 使用 getByRole("textbox", name="Please enter")
+                self.logger.debug(f"填写电话号码")
+                phone_input = self.page.get_by_role("textbox", name=self.PHONE_INPUT_NAME)
+                await phone_input.fill(phone)
+                self.logger.debug(f"电话号码填写成功: {phone}")
 
                 allure.attach(f"区号: {area_code}, 电话: {phone}", "联系电话")
                 self.logger.info(f"联系电话填写成功: {area_code} {phone}")
@@ -241,41 +208,18 @@ class CreateNewRFPProjectPage(BasePage):
 
     # ========== 选择器方法 ==========
     async def select_signing_method(self) -> None:
-        """选择签约方式: Private RFP (value=2)"""
+        """选择签约方式: Private RFP"""
         self.logger.info("开始选择签约方式: Private RFP")
 
         with allure.step("选择签约方式: Private RFP"):
             try:
-                # 调试：输出所有radio按钮信息
-                self.logger.debug("=== 调试信息：页面上所有单选框 ===")
-                all_radios = await self.page.locator(self.ALL_RADIOS_SELECTOR).all()
-                self.logger.debug(f"找到 {len(all_radios)} 个单选框")
-                for i, radio in enumerate(all_radios[:20]):  # 只显示前20个
-                    value = await radio.get_attribute("value")
-                    name = await radio.get_attribute("name")
-                    checked = await radio.get_attribute("checked")
-                    self.logger.debug(f"  [{i}] value={value}, name={name}, checked={checked}")
-
-                # 调试：输出所有包含"Method"的label
-                self.logger.debug("=== 调试信息：包含'Method'的label ===")
-                method_labels = await self.page.locator(self.METHOD_LABELS_SELECTOR).all()
-                self.logger.debug(f"找到 {len(method_labels)} 个匹配的label")
-                for i, label in enumerate(method_labels):
-                    text = await label.text_content()
-                    self.logger.debug(f"  [{i}] text={text}")
-
-                # 调试：尝试定位 "Method of Signing" label
-                self.logger.debug(f"=== 尝试定位: label:has-text('{self.METHOD_OF_SIGNING_LABEL}') ===")
-                try:
-                    method_label_element = await self.page.locator(f"label:has-text('{self.METHOD_OF_SIGNING_LABEL}')").first.wait_for(timeout=5000)
-                    self.logger.debug("✓ 找到了标签")
-                except Exception as e:
-                    self.logger.debug(f"✗ 未找到标签: {str(e)}")
-
-                # 通过 label 文本定位，找到包含 value=2 的 radio
-                private_radio = self.page.locator(f"label:has-text('{self.METHOD_OF_SIGNING_LABEL}')").locator("..").locator(f"input[type='radio'][value='{self.PRIVATE_RFP_VALUE}']")
-                await private_radio.click()
-                self.logger.debug(f"Private RFP (value={self.PRIVATE_RFP_VALUE}) 已选中")
+                # 根据录制脚本：page.get_by_label("Method of Signing").locator("span").nth(1).click()
+                # 找到 Method of Signing 标签，然后点击其中第 2 个 span（nth(1) 表示索引 1）
+                self.logger.debug(f"定位 Method of Signing 标签并点击第 2 个 span")
+                method_label = self.page.get_by_label(self.METHOD_OF_SIGNING_LABEL)
+                span_element = method_label.locator("span").nth(1)
+                await span_element.click()
+                self.logger.debug(f"Private RFP 已选中")
                 allure.attach("已选择: Private RFP", "签约方式")
                 self.logger.info("Private RFP 已选中")
             except Exception as e:
@@ -285,15 +229,17 @@ class CreateNewRFPProjectPage(BasePage):
                 raise
 
     async def select_notification_method(self) -> None:
-        """选择通知方式: Manual Notification (value=0)"""
+        """选择通知方式: Manual Notification"""
         self.logger.info("开始选择通知方式: Manual Notification")
 
         with allure.step("选择通知方式: Manual Notification"):
             try:
-                # 定位到对应 label，再找 value=0 的 radio
-                manual_radio = self.page.locator(f"label:has-text('{self.NOTIFICATION_METHOD_LABEL}')").locator("..").locator(f"input[type='radio'][value='{self.MANUAL_NOTIFICATION_VALUE}']")
-                await manual_radio.click()
-                self.logger.debug(f"Manual Notification (value={self.MANUAL_NOTIFICATION_VALUE}) 已选中")
+                # 根据录制脚本：page.get_by_text("Manual Notification").click()
+                # 直接通过文本定位并点击 Manual Notification
+                self.logger.debug(f"通过文本定位 Manual Notification")
+                manual_notification = self.page.get_by_text("Manual Notification")
+                await manual_notification.click()
+                self.logger.debug(f"Manual Notification 已选中")
                 allure.attach("已选择: Manual Notification", "通知方式")
                 self.logger.info("Manual Notification 已选中")
             except Exception as e:
@@ -303,19 +249,24 @@ class CreateNewRFPProjectPage(BasePage):
                 raise
 
     async def handle_quotation_reports(self) -> None:
-        """设置报价报告为 NO NEED (value=0)"""
+        """设置报价报告为 NO NEED"""
         self.logger.info("开始设置报价报告为 NO NEED")
 
         with allure.step("设置报价报告为 NO NEED"):
             try:
                 # 设置 GROUP QUOTATION STATUS REPORT 为 NO NEED
-                group_radio = self.page.locator(f"label:has-text('{self.GROUP_QUOTATION_LABEL}')").locator("..").locator(f"input[type='radio'][value='{self.GROUP_QUOTATION_VALUE}']")
-                await group_radio.click()
+                # 通过文本定位
+                self.logger.debug(f"设置 GROUP QUOTATION STATUS REPORT 为 NO NEED")
+                group_label = self.page.get_by_label(self.GROUP_QUOTATION_LABEL)
+                no_need_group = group_label.locator("span").nth(0)
+                await no_need_group.click()
                 self.logger.debug(f"GROUP QUOTATION STATUS REPORT 已设置为 NO NEED")
 
                 # 设置 Enterprise Quotation Status Report 为 NO NEED
-                enterprise_radio = self.page.locator(f"label:has-text('{self.ENTERPRISE_QUOTATION_LABEL}')").locator("..").locator(f"input[type='radio'][value='{self.ENTERPRISE_QUOTATION_VALUE}']")
-                await enterprise_radio.click()
+                self.logger.debug(f"设置 Enterprise Quotation Status Report 为 NO NEED")
+                enterprise_label = self.page.get_by_label(self.ENTERPRISE_QUOTATION_LABEL)
+                no_need_enterprise = enterprise_label.locator("span").nth(0)
+                await no_need_enterprise.click()
                 self.logger.debug(f"Enterprise Quotation Status Report 已设置为 NO NEED")
 
                 allure.attach(f"GROUP QUOTATION STATUS: NO NEED\nEnterprise Quotation Status: NO NEED", "报价报告设置")
@@ -342,32 +293,28 @@ class CreateNewRFPProjectPage(BasePage):
 
         with allure.step(f"选择日期范围: {start_date} ~ {end_date}"):
             try:
-                # 获取所有日期选择器（placeholder='Please select' 的 input）
-                date_pickers = await self.page.get_by_placeholder(self.DATE_PICKER_PLACEHOLDER).all()
-
-                # 预期的日期选择器数量（3个范围，每个2个开始/结束）
-                expected_count = 6
-                if len(date_pickers) < expected_count:
-                    raise Exception(f"找到的日期选择器不足：{len(date_pickers)} 个，需要至少 {expected_count} 个")
-
-                # 三个日期范围配置
+                # 日期范围配置（label 文本）
                 date_ranges = [
-                    ("Bidding Date Range", self.BIDDING_DATE_START_IDX, self.BIDDING_DATE_END_IDX),
-                    ("Registration Period", self.REGISTRATION_START_IDX, self.REGISTRATION_END_IDX),
-                    ("First Round Bidding Period", self.FIRST_ROUND_START_IDX, self.FIRST_ROUND_END_IDX)
+                    "Bidding Date Range",
+                    "Registration Period",
+                    "First Round Bidding Period"
                 ]
 
-                for range_name, start_idx, end_idx in date_ranges:
+                for range_name in date_ranges:
                     self.logger.debug(f"填充 {range_name}: {start_date} ~ {end_date}")
 
-                    start_picker = date_pickers[start_idx]
-                    end_picker = date_pickers[end_idx]
+                    # 根据录制脚本：page.get_by_label("Bidding Date Range").get_by_placeholder("Start Time")
+                    range_label = self.page.get_by_label(range_name)
 
+                    # 填充开始日期
+                    start_picker = range_label.get_by_placeholder("Start Time")
                     await start_picker.fill(start_date)
-                    self.logger.debug(f"  开始日期已填充: {start_date}")
+                    self.logger.debug(f"  {range_name} 开始日期已填充: {start_date}")
 
+                    # 填充结束日期
+                    end_picker = range_label.get_by_placeholder("End Time")
                     await end_picker.fill(end_date)
-                    self.logger.debug(f"  结束日期已填充: {end_date}")
+                    self.logger.debug(f"  {range_name} 结束日期已填充: {end_date}")
 
                 allure.attach(
                     f"Bidding Date Range: {start_date} ~ {end_date}\n"
@@ -384,14 +331,27 @@ class CreateNewRFPProjectPage(BasePage):
 
 
     # ========== 数量输入方法 ==========
-    async def fill_expected_hotels_count(self) -> int:
-        """填写预期合同酒店数量（随机生成 1-50）"""
+    async def fill_expected_hotels_count(self, count: int = None) -> int:
+        """
+        填写预期合同酒店数量
+
+        Args:
+            count: 可选，指定酒店数量；如果不指定则生成随机数（1-50）
+
+        Returns:
+            int: 实际填入的酒店数量
+        """
         self.logger.info("开始填写预期合同酒店数量")
 
         with allure.step("填写预期合同酒店数量"):
             try:
-                hotels_count = self._generate_random_hotels_count()
-                self.logger.debug(f"生成随机酒店数量: {hotels_count}")
+                # 确定要填写的数量
+                if count is None:
+                    hotels_count = self._generate_random_hotels_count()
+                    self.logger.debug(f"未指定数量，生成随机酒店数量: {hotels_count}")
+                else:
+                    hotels_count = count
+                    self.logger.debug(f"使用指定的酒店数量: {hotels_count}")
 
                 # 使用 getByLabel() 定位
                 count_input = self.page.get_by_label(self.EXPECTED_HOTELS_COUNT_LABEL)

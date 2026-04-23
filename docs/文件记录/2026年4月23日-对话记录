@@ -1,3 +1,9 @@
+
+
+2026年4月23日
+
+---- 实现内容记录 ----
+
 需求描述，
 1. 实现代码在operate的rfp_management目录下，我们要实现一个功能：发布项目功能：
    - 登录平台端账号，在签约管理顶级菜单：RFP Management，选择下拉菜单，发布项目Create new RFP project，
@@ -40,3 +46,9 @@ def run(playwright: Playwright) -> None:
     context.close()
     browser.close()
 
+---------------------
+
+---------------------
+记录文段一：
+1. 关于参数话的部分，首先你提及的rfp_project_cases.json，我建议不要使用这个名字，因为我觉得还有其他的模块可能存在相同，或者不好区分，比如这一个用例文件是在rfp_management菜单下的，我建议使用rfp_management_params.json这个名字
+2. 其次第三点中，参加参数化，我觉得这是一个通用函数，可以放到utils当中去

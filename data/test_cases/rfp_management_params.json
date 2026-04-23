@@ -1,0 +1,34 @@
+{
+  "create_rfp_project": [
+    {
+      "case_id": "case_001",
+      "description": "标准项目创建",
+      "organization": "hyg测试机构",
+      "project_name_prefix": "hyg-自动化项目",
+      "contact_person": "荷叶",
+      "area_code": "010",
+      "phone": "12345678",
+      "signing_method": "Private RFP",
+      "notification_method": "Manual Notification",
+      "quotation_report": "NO NEED",
+      "start_date": "2026-04-10",
+      "end_date": "2026-05-10",
+      "expected_hotels": 20
+    },
+    {
+      "case_id": "case_002",
+      "description": "其他地区项目",
+      "organization": "hyg测试机构",
+      "project_name_prefix": "hyg-自动化项目",
+      "contact_person": "张三",
+      "area_code": "021",
+      "phone": "88888888",
+      "signing_method": "Private RFP",
+      "notification_method": "Manual Notification",
+      "quotation_report": "NO NEED",
+      "start_date": "2026-05-01",
+      "end_date": "2026-06-01",
+      "expected_hotels": 30
+    }
+  ]
+}
