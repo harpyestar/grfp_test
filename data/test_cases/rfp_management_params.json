@@ -15,5 +15,13 @@
       "end_date": "2026-05-10",
       "expected_hotels": 20
     }
+  ],
+  "rfp_contracting_map": [
+    {
+      "case_id": "map_001",
+      "description": "地图签约页面 - 点击酒店标记验证间夜弹窗",
+      "search_keyword": "hyg-测试项目-新加坡酒店类",
+      "project_name": "hyg-测试项目-新加坡酒店类"
+    }
   ]
 }
