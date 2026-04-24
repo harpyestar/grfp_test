@@ -62,9 +62,9 @@ python+Playwright（pytest-playwright）+allure
 - **项目名称**: grfp-ui-test
 - **位置**: `d:\work_dev\GRFP\grfp-ui-test\`
 - **Git 标签**: v1.0.0
-- **提交数**: 14 个语义化提交
-- **测试用例**: 9 个 (3 个测试方法 × 3 个角色参数化)
-- **状态**: ✅ 完整项目骨架 + 登录功能实现完成
+- **提交数**: 20+ 个语义化提交
+- **测试用例**: 11+ 个
+- **状态**: ✅ 完整项目骨架 + 核心功能测试实现完成
 
 ### 实际项目目录结构（已实现）
 
@@ -108,7 +108,10 @@ grfp-ui-test/
 │   │   ├── poi_management/
 │   │   └── rfp_management/
 │   │       ├── __init__.py
-│   │       └── create_rfp_project_page.py  # ✅ RFP 项目创建页 POM
+│   │       ├── create_rfp_project_page.py         # ✅ RFP 项目创建页 POM
+│   │       ├── edit_rfp_project_page.py           # ✅ RFP 项目编辑页 POM
+│   │       ├── rfp_contracting_map_page.py        # ✅ 签约地图页 POM
+│   │       └── rfp_detailPage_project.py          # ✅ 报价详情页 POM
 │   │
 │   ├── hotel/                        # 酒店端功能页
 │   │   ├── __init__.py
@@ -140,8 +143,11 @@ grfp-ui-test/
 │   │   ├── organization/
 │   │   └── rfp_management/
 │   │       ├── __init__.py
-│   │       ├── conftest.py           # ✅ RFP 管理测试配置
-│   │       └── test_create_rfp_project.py  # ✅ RFP 项目创建测试
+│   │       ├── conftest.py                                # ✅ RFP 管理测试配置
+│   │       ├── test_create_rfp_project.py                 # ✅ RFP 项目创建测试
+│   │       ├── test_edit_rfp_project_tabs.py              # ✅ RFP 项目编辑 Tab 测试
+│   │       ├── test_rfp_map_model_project.py              # ✅ 签约地图弹窗测试
+│   │       └── test_rfp_detailPage_project.py             # ✅ 报价详情页备注测试
 │   │
 │   ├── hotel/                        # 酒店端测试
 │   │   ├── __init__.py
@@ -208,28 +214,51 @@ grfp-ui-test/
 | 功能模块 | 状态 | 说明 |
 |---------|------|------|
 | **基础框架** | ✅ | POM 基类、conftest、pytest 配置、日志系统 |
-| **认证功能** | ✅ | 登录页面、三角色登录测试（9 个用例参数化） |
-| **RFP 项目管理** | ✅ | 创建 RFP 项目页面 POM、创建流程测试用例、参数化测试数据加载 |
-| **超时管理** | ✅ | 统一超时配置、避免硬编码 |
-| **元素定位规范** | ✅ | 定位器集中管理、支持多种定位方式 |
-| **参数化测试数据** | ✅ | test_accounts.json（角色账户）、rfp_management_params.json（RFP 参数） |
-| **文档系统** | ✅ | 需求描述、设计文档、实现计划、使用指南 |
+| **认证功能** | ✅ | 登录页面、三角色登录测试 |
+| **RFP 项目创建** | ✅ | 项目创建页面 POM、创建流程测试、参数化数据 |
+| **RFP 项目编辑** | ✅ | 项目编辑页面 POM、Tab 保存功能测试、项目启动验证 |
+| **签约地图功能** | ✅ | 地图页 POM、酒店标记弹窗测试（显示/隐藏验证） |
+| **报价详情页** | ✅ | 详情页 POM、内部跟进备注功能框架（待UI补充选择器） |
+| **元素定位规范** | ✅ | 定位器集中管理、禁止硬编程 |
+| **参数化测试数据** | ✅ | test_accounts.json、rfp_management_params.json |
 
 ### 待实现功能
 
 | 功能模块 | 优先级 | 备注 |
 |---------|------|------|
-| 邀约酒店管理页面与测试 | P1 | 需要实现页面 POM 和对应测试 |
-| 报价管理页面与测试 | P1 | 酒店端提交报价流程 |
-| 评标管理页面与测试 | P1 | 运营端查看报价和评标 |
-| 机构管理页面与测试 | P2 | 组织、部门、员工、签约主体管理 |
-| POI 管理页面与测试 | P2 | POI 绑定、解绑、地图配置 |
-| 系统配置页面与测试 | P2 | 系统参数配置 |
-| 端到端测试 | P3 | 完整业务流程串联测试 |
+| 报价详情页选择器补充 | P1 | 内部跟进备注相关选择器待 UI 补充 |
+| 邀约酒店管理测试 | P1 | 酒店邀约、集团邀约、批量操作 |
+| 报价管理测试 | P1 | 酒店端提交报价、议价、拒绝流程 |
+| 评标管理测试 | P1 | 运营端查看报价、评标分析 |
+| 机构管理测试 | P2 | 组织、部门、员工管理 |
+| POI 管理测试 | P2 | POI 绑定、解绑、地图配置 |
+| 端到端测试 | P3 | 完整业务流程串联 |
 
 ---
 
-## 系统页面结构与导航
+## 🆕 最近新增功能（2026年4月24日）
+
+### 1. RFP 项目编辑 - Tab 保存功能测试
+- **文件**: `test_edit_rfp_project_tabs.py::test_edit_rfp_project_all_tabs_save`
+- **功能**: 遍历项目编辑页所有 Tab，验证 Save 按钮保存功能
+- **覆盖**: 11 个 Tab，成功提示验证
+
+### 2. 项目启动验证
+- **文件**: `test_edit_rfp_project_tabs.py::test_verify_start_project_confirmation_popup`
+- **功能**: 搜索未启动项目 → 点击 Start → 验证确认弹窗出现（Yes 按钮）
+- **定位方式**: 使用 `locator + filter` 精确定位 Start 按钮
+
+### 3. 签约地图弹窗测试
+- **文件**: `test_rfp_map_model_project.py::test_map_marker_price_popup`
+- **功能**: 鼠标悬浮/点击酒店标记 → 验证间夜弹窗显示/隐藏
+- **验证**: 弹窗 HTML 结构 `div.price-popup`
+
+### 4. 报价详情页备注框架
+- **文件**: `rfp_detailPage_project.py` 和 `test_rfp_detailPage_project.py`
+- **功能**: 详情页打开 → 点击备注 → 填写内容 → 保存 → 刷新验证
+- **状态**: 框架完成，待 UI 补充选择器
+
+---
 
 ### 角色菜单权限
 
@@ -272,18 +301,25 @@ grfp-ui-test/
 
 ## 元素定位规则
 
-** 所有的元素单独放出来，禁止硬编程，便于后续调成 **
+**核心原则：所有元素定位器在类变量顶部集中定义，方法中直接复用，禁止硬编程**
 
-我需要用 Playwright 精准定位页面表单元素（输入框/单选/复选/下拉框/提交按钮），请严格按照以下规则执行，禁止使用脆弱定位方式：
+1. **定位器集中管理**：
+   - 所有选择器定义在 POM 类顶部，以 `_SELECTOR`、`_TEXT`、`_NAME` 等后缀命名
+   - 示例：`START_BUTTON_TEXT = "Start"`，`SEARCH_BUTTON_SELECTOR = ".search > .btn"`
 
-=== 核心定位规则（必须遵守） ===
-1. 优先使用最稳定的定位器：
-   ① 文本定位（最通用）：page.getByRole('button', { name: /提交|确认|登录|搜索/i })
-   ② 标签关联定位（输入框专用）：page.getByLabel('用户名') / page.getByPlaceholder('请输入手机号')
-   ③ 测试属性定位（最稳定）：page.getByTestId('submit-btn')
-   ④ 表单name属性：page.locator('[name="username"]')
-2. 绝对禁止使用：动态id、随机class、长链式css选择器、xpath绝对路径
-3. 必须检查：iframe嵌套、shadow DOM、元素隐藏、动态加载、弹窗表单
-4. 必须输出：可直接运行的代码 + 定位验证方法 + 失败排查方案
+2. **优先使用的定位方式**：
+   - 文本精确定位：`page.get_by_text(text, exact=True)`
+   - 角色定位：`page.get_by_role('button', name='...')`
+   - 过滤定位：`page.locator("div").filter(has_text=re.compile(r"^text$"))`
+   - CSS 选择器：仅用于特定结构 `page.locator(".class")`
+
+3. **禁止硬编码**：
+   - ❌ `page.get_by_text("确定")` - 直接硬编码
+   - ✅ `page.get_by_text(self.CONFIRM_BUTTON_TEXT)` - 使用类变量
+
+4. **异常处理**：
+   - 使用 `wait_for()` 确保元素加载
+   - 使用 `is_visible()` 检查元素可见性
+   - 异常捕获并记录详细日志
 
 

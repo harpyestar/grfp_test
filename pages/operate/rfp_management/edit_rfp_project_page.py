@@ -23,10 +23,15 @@ class EditRFPProjectPage(BasePage):
 
     # ========== Contracting 页面元素 ==========
     NOT_STARTED_TAB_NAME = "Not Started"
+    STARTED_TAB_NAME = "Started"
     PROJECT_SEARCH_FILTER_PATTERN = r"^Project$"
     PROJECT_SEARCH_FILTER_NTH = 1
     SEARCH_BUTTON_SELECTOR = ".search > .btn"
     PROJECT_SEARCH_INPUT_PLACEHOLDER = "请输入项目名称"
+
+    # ========== 项目操作按钮 ==========
+    START_BUTTON_TEXT = "Start"
+    YES_CONFIRMATION_BUTTON_TEXT = "Yes"
 
     # ========== 编辑页面 Tab 元素 ==========
     SAVE_BUTTON_NAME = "Save"
@@ -107,6 +112,29 @@ class EditRFPProjectPage(BasePage):
 
             except Exception as e:
                 error_msg = f"点击 Not Started Tab 失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "点击错误")
+                raise
+
+    async def click_started_tab(self) -> None:
+        """点击 Started Tab"""
+        self.logger.info("开始点击 Started Tab")
+
+        with allure.step(f"选择 {self.STARTED_TAB_NAME} Tab"):
+            try:
+                # 点击 Started Tab
+                self.logger.debug(f"定位 {self.STARTED_TAB_NAME} Tab")
+                started_tab = self.page.get_by_role("tab", name=self.STARTED_TAB_NAME, exact=True)
+                await started_tab.click()
+                self.logger.info("Started Tab 已点击")
+
+                # 等待表格加载
+                await self.page.wait_for_load_state("networkidle")
+                allure.attach(f"已选择: {self.STARTED_TAB_NAME}", "Tab 选择")
+                self.logger.info("[OK] Started Tab 加载完成")
+
+            except Exception as e:
+                error_msg = f"点击 Started Tab 失败: {str(e)}"
                 self.logger.error(error_msg)
                 allure.attach(error_msg, "点击错误")
                 raise
@@ -288,6 +316,98 @@ class EditRFPProjectPage(BasePage):
 
         except Exception as e:
             self.logger.debug(f"处理 Previous step 按钮失败: {str(e)}")
+
+    # ========== 项目启动相关方法 ==========
+    async def search_project_by_keyword(self, project_name: str) -> None:
+        """搜索项目（通用方法，用于 Started/Not Started Tab）"""
+        self.logger.info(f"开始搜索项目: {project_name}")
+
+        with allure.step(f"搜索项目: {project_name}"):
+            try:
+                # Step 1: 点击 Project 搜索框
+                self.logger.debug("定位 Project 搜索框")
+                project_filter = self.page.locator("div").filter(
+                    has_text=re.compile(self.PROJECT_SEARCH_FILTER_PATTERN)
+                ).nth(self.PROJECT_SEARCH_FILTER_NTH)
+                await project_filter.click()
+                self.logger.info("Project 搜索框已点击")
+
+                # Step 2: 等待并输入项目名称
+                await self.page.wait_for_timeout(300)
+                self.logger.debug(f"输入项目名称: {project_name}")
+                search_input = project_filter.locator("input.el-input__inner")
+                await search_input.clear()
+                await search_input.fill(project_name)
+                await self.page.wait_for_timeout(200)
+                self.logger.info(f"项目名称已输入: {project_name}")
+
+                # Step 3: 点击搜索按钮
+                self.logger.debug("点击搜索按钮")
+                search_btn = self.page.locator(self.SEARCH_BUTTON_SELECTOR)
+                await search_btn.click()
+                self.logger.info("搜索按钮已点击")
+
+                # Step 4: 等待搜索结果加载
+                await self.page.wait_for_load_state("networkidle")
+                allure.attach(f"搜索项目: {project_name}", "搜索操作")
+                self.logger.info("[OK] 项目搜索完成")
+
+            except Exception as e:
+                error_msg = f"搜索项目失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "搜索错误")
+                raise
+
+    async def click_start_button(self) -> None:
+        """点击第一个 Start 按钮"""
+        self.logger.info("开始点击 Start 按钮")
+
+        with allure.step("点击 Start 按钮"):
+            try:
+                # 使用 locator + filter 精确定位 Start 按钮
+                self.logger.debug(f"定位 {self.START_BUTTON_TEXT} 按钮")
+                await self.page.locator("div").filter(
+                    has_text=re.compile(r"^Start$")
+                ).click()
+                self.logger.info("Start 按钮已点击")
+
+                # 等待弹窗出现
+                await self.page.wait_for_timeout(500)
+                allure.attach("Start 按钮已点击，等待确认弹窗", "操作结果")
+                self.logger.info("✅ Start 按钮点击完成")
+
+            except Exception as e:
+                error_msg = f"点击 Start 按钮失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "点击错误")
+                raise
+
+    async def verify_start_confirmation_popup_visible(self) -> bool:
+        """验证 Start 确认弹窗（Yes 按钮）是否可见"""
+        self.logger.info("开始验证 Start 确认弹窗")
+
+        with allure.step("验证 Yes 确认按钮是否可见"):
+            try:
+                # 查找 Yes 按钮
+                self.logger.debug(f"定位 {self.YES_CONFIRMATION_BUTTON_TEXT} 按钮")
+                yes_btn = self.page.get_by_text(self.YES_CONFIRMATION_BUTTON_TEXT, exact=True)
+
+                # 等待元素加载
+                await yes_btn.wait_for(timeout=timeout_config.get_element_timeout())
+                self.logger.info("Yes 按钮已定位")
+
+                # 检查是否可见
+                is_visible = await yes_btn.is_visible()
+                self.logger.info(f"Yes 按钮可见: {is_visible}")
+
+                allure.attach(f"Yes 确认按钮可见: {is_visible}", "弹窗验证结果")
+                return is_visible
+
+            except Exception as e:
+                error_msg = f"验证 Start 确认弹窗失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "验证错误")
+                return False
 
     # ========== 完整流程方法 ==========
     async def test_all_tabs_save_functionality(self) -> dict:

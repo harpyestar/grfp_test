@@ -110,3 +110,66 @@ class TestEditRFPProjectTabs:
             final_report += f"\n   - 说明: {detail['message']}"
 
         allure.attach(final_report, "完整测试报告", allure.attachment_type.TEXT)
+
+    @pytest.mark.asyncio
+    @allure.title("验证未启动项目的 Start 按钮和确认弹窗")
+    @allure.description("""
+    测试: Operate 角色在 Contracting 页面中查看未启动项目的 Start 按钮和确认弹窗
+
+    测试流程:
+    1. 使用 operate 角色账号登录 (fixture 自动完成)
+    2. 导航至 RFP Management > Contracting 页面
+    3. 选择 "Started" Tab
+    4. 搜索未启动项目: hyg-自动化项目-未完成项
+    5. 点击该项目的 Start 按钮
+    6. 验证 Yes 确认按钮出现（不点击 Yes，只验证出现）
+
+    预期结果:
+    - 能够找到项目的 Start 按钮
+    - 点击 Start 后出现 Yes 确认按钮的弹窗
+    """)
+    async def test_verify_start_project_confirmation_popup(self, page_module, operate_user):
+        """
+        验证未启动项目的 Start 按钮和确认弹窗
+
+        Args:
+            page_module: Module 级 page 对象 - 复用登录状态
+            operate_user: Operate 角色登录 fixture
+        """
+        # 初始化 POM 类
+        edit_page = EditRFPProjectPage(page_module)
+
+        with allure.step("【步骤 1】导航至 RFP Management > Contracting 页面"):
+            # 导航至 Contracting 页面
+            await edit_page.navigate_to_contracting()
+
+        with allure.step("【步骤 2】选择 Not Started Tab"):
+            # 选择 Not Started Tab
+            await edit_page.click_not_started_tab()
+
+        with allure.step(f"【步骤 3】搜索项目: {self.TEST_PROJECT_NAME}"):
+            # 搜索项目
+            await edit_page.search_project_by_keyword(self.TEST_PROJECT_NAME)
+
+        with allure.step("【步骤 4】点击 Start 按钮"):
+            # 点击 Start 按钮
+            await edit_page.click_start_button()
+
+        with allure.step("【步骤 5】验证 Yes 确认按钮出现"):
+            # 验证确认弹窗是否显示
+            confirmation_visible = await edit_page.verify_start_confirmation_popup_visible()
+            assert confirmation_visible, "Start 确认弹窗（Yes 按钮）未出现"
+
+        # 生成测试结果报告
+        result_report = f"""
+        [OK] 未启动项目 Start 按钮验证测试完成
+
+        【测试项目】
+        - 项目名称: {self.TEST_PROJECT_NAME}
+
+        【测试结果】
+        - Start 按钮: 已找到并点击
+        - 确认弹窗: 已出现（Yes 按钮可见）
+        - 测试状态: 通过 ✓
+        """
+        allure.attach(result_report, "测试结果", allure.attachment_type.TEXT)
