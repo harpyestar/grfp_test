@@ -23,5 +23,13 @@
       "search_keyword": "hyg-测试项目-新加坡酒店类",
       "project_name": "hyg-测试项目-新加坡酒店类"
     }
+  ],
+  "rfp_detail_page": [
+    {
+      "case_id": "detail_001",
+      "description": "报价详情页 - 添加内部跟进备注",
+      "search_keyword": "hyg-测试项目-新加坡酒店类",
+      "project_name": "hyg-测试项目-新加坡酒店类"
+    }
   ]
 }
