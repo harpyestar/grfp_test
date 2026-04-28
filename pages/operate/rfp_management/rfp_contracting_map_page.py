@@ -74,7 +74,7 @@ class RFPContractingMapPage(BasePage):
                 # Step 4: 等待页面加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach("Contracting 页面已加载", "导航结果")
-                self.logger.info("✅ Contracting 页面加载完成")
+                self.logger.info("Contracting 页面加载完成")
 
             except Exception as e:
                 error_msg = f"导航至 Contracting 页面失败: {str(e)}"
@@ -97,7 +97,7 @@ class RFPContractingMapPage(BasePage):
                 # 等待表格加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach(f"已选择: {self.STARTED_TAB_NAME}", "Tab 选择")
-                self.logger.info(f"✅ {self.STARTED_TAB_NAME} Tab 加载完成")
+                self.logger.info(f"{self.STARTED_TAB_NAME} Tab 加载完成")
 
             except Exception as e:
                 error_msg = f"点击 Started Tab 失败: {str(e)}"
@@ -160,7 +160,7 @@ class RFPContractingMapPage(BasePage):
                 # 等待签约页面加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach("Contract Signing 页面已打开", "操作结果")
-                self.logger.info("✅ Contract Signing 页面加载完成")
+                self.logger.info("Contract Signing 页面加载完成")
 
             except Exception as e:
                 error_msg = f"点击 Contract Signing 失败: {str(e)}"
@@ -183,7 +183,7 @@ class RFPContractingMapPage(BasePage):
                 # 等待页面加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach(f"已选择: {self.NEW_PROPOSAL_TAB_NAME}", "标签页选择")
-                self.logger.info(f"✅ {self.NEW_PROPOSAL_TAB_NAME} 标签页加载完成")
+                self.logger.info(f"{self.NEW_PROPOSAL_TAB_NAME} 标签页加载完成")
 
             except Exception as e:
                 error_msg = f"点击 New proposal 标签页失败: {str(e)}"
@@ -217,7 +217,7 @@ class RFPContractingMapPage(BasePage):
                 # 等待页面反应
                 await self.page.wait_for_timeout(500)
                 allure.attach("第一个酒店已选择", "酒店选择")
-                self.logger.info("✅ 酒店选择完成")
+                self.logger.info("酒店选择完成")
 
             except Exception as e:
                 error_msg = f"选择酒店失败: {str(e)}"
@@ -246,7 +246,7 @@ class RFPContractingMapPage(BasePage):
                 # 等待弹窗可能出现
                 await self.page.wait_for_timeout(300)
                 allure.attach("鼠标已悬浮", "交互操作")
-                self.logger.info("✅ 悬浮操作完成")
+                self.logger.info("悬浮操作完成")
 
             except Exception as e:
                 error_msg = f"悬浮地图标记失败: {str(e)}"
@@ -276,7 +276,7 @@ class RFPContractingMapPage(BasePage):
                 # 等待弹窗出现
                 await self.page.wait_for_timeout(300)
                 allure.attach("地图标记已点击", "交互操作")
-                self.logger.info("✅ 点击操作完成")
+                self.logger.info("点击操作完成")
 
             except Exception as e:
                 error_msg = f"点击地图标记失败: {str(e)}"
@@ -304,7 +304,7 @@ class RFPContractingMapPage(BasePage):
                 # 等待弹窗可能消失
                 await self.page.wait_for_timeout(300)
                 allure.attach("鼠标已移开", "交互操作")
-                self.logger.info("✅ 鼠标移开完成")
+                self.logger.info("鼠标移开完成")
 
             except Exception as e:
                 error_msg = f"移开鼠标失败: {str(e)}"
@@ -335,7 +335,7 @@ class RFPContractingMapPage(BasePage):
                 else:
                     allure.attach("弹窗未出现", "验证结果")
 
-                self.logger.info(f"✅ 弹窗可见性验证完成: {is_visible}")
+                self.logger.info(f"弹窗可见性验证完成: {is_visible}")
                 return is_visible
 
             except Exception as e:
@@ -360,7 +360,7 @@ class RFPContractingMapPage(BasePage):
                 self.logger.info(f"弹窗不可见: {is_not_visible}")
 
                 allure.attach(f"弹窗不可见: {is_not_visible}", "验证结果")
-                self.logger.info(f"✅ 弹窗不可见验证完成: {is_not_visible}")
+                self.logger.info(f"弹窗不可见验证完成: {is_not_visible}")
                 return is_not_visible
 
             except Exception as e:

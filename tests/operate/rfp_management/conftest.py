@@ -33,7 +33,7 @@ def page_module(browser, event_loop):
     async def create_module_page():
         context = await browser.new_context()
         page = await context.new_page()
-        logger.info("✅ Module-level page created - ready for shared login state")
+        logger.info("Module-level page created - ready for shared login state")
         return page, context
 
     _module_page, _module_context = event_loop.run_until_complete(create_module_page())
@@ -82,9 +82,9 @@ def operate_user(page_module, event_loop):
         result = event_loop.run_until_complete(perform_login())
 
         if result["success"]:
-            logger.info(f"✅ Operate user login successful (ONE-TIME for all tests in module)")
+            logger.info(f"Operate user login successful (ONE-TIME for all tests in module)")
             logger.info(f"   URL: {result['url']}")
-            logger.info(f"   💡 Tip: All parametrized test cases will reuse this login state")
+            logger.info(f"   Tip:All parametrized test cases will reuse this login state")
             # 登录成功后，返回已登录状态的 page
             yield page_module
         else:
@@ -125,7 +125,7 @@ def reset_to_home_page(page_module, event_loop):
         home_url = f"{base_url}/home"
         logger.info(f"Navigating to home page: {home_url}")
         await page_module.goto(home_url, wait_until="networkidle")
-        logger.info("✅ Page reset to /home - ready for test execution")
+        logger.info("Page reset to /home - ready for test execution")
 
     event_loop.run_until_complete(navigate_home())
 

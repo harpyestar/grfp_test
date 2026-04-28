@@ -35,28 +35,11 @@ class RFPDetailPageProject(BasePage):
     NEW_PROPOSAL_TAB_NAME = "New proposal"
 
     # ========== 详情页相关元素 ==========
-    # Detail 按钮（打开详情页弹窗）
     DETAIL_BUTTON_TEXT = "Detail"
-
-    # TODO: 待定元素 - 内部跟进备注按钮定位器（页面右侧详情弹窗中）
-    # 元素描述：在地图右侧的酒店详情弹窗中，顶部标题右侧的备注按钮
-    # 临时占位符，后续补充
-    INTERNAL_NOTES_BUTTON_SELECTOR = "TODO: 内部跟进备注按钮定位器待定"
-
-    # TODO: 待定元素 - 备注输入框定位器
-    # 元素描述：点击备注按钮后弹出的弹窗中的文本输入框
-    # 临时占位符，后续补充
-    NOTES_INPUT_SELECTOR = "TODO: 备注输入框定位器待定"
-
-    # TODO: 待定元素 - 备注确定按钮定位器
-    # 元素描述：备注弹窗中的确定/保存按钮
-    # 临时占位符，后续补充
-    NOTES_CONFIRM_BUTTON_SELECTOR = "TODO: 确定按钮定位器待定"
-
-    # TODO: 待定元素 - 备注显示区域定位器
-    # 元素描述：详情页顶部标题右侧，显示已保存备注的区域
-    # 临时占位符，后续补充
-    NOTES_DISPLAY_AREA_SELECTOR = "TODO: 备注显示区域定位器待定"
+    INTERNAL_NOTES_BUTTON_NAMES = ["Internal Memo", "内部备注", "内部跟进备注"]
+    NOTES_INPUT_PLACEHOLDERS = ["请输入内部跟进备注", "请输入内部备注"]
+    NOTES_TEXTAREA_SELECTOR = ".el-dialog__body textarea.el-textarea__inner"
+    NOTES_CONFIRM_BUTTON_NAMES = ["确定", "Confirm", "Save"]
 
     def __init__(self, page: Page):
         super().__init__(page)
@@ -66,6 +49,63 @@ class RFPDetailPageProject(BasePage):
     def _generate_timestamp(self) -> str:
         """生成时间戳格式: YYYYMMDD-HHMMSS"""
         return datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    async def _click_first_visible_button(self, page: Page, button_names: list[str]) -> str:
+        """点击首个可见按钮并返回按钮名称"""
+        last_error = None
+
+        for button_name in button_names:
+            try:
+                button = page.get_by_role("button", name=button_name).first
+                await button.wait_for(timeout=timeout_config.get_element_timeout())
+                if await button.is_visible():
+                    await button.click()
+                    return button_name
+            except Exception as e:
+                last_error = e
+                self.logger.debug(f"按钮未命中: {button_name}, error: {str(e)}")
+
+        raise RuntimeError(
+            f"未找到可点击按钮，候选名称: {button_names}，最后错误: {str(last_error)}"
+        )
+
+    async def _fill_first_visible_input(self, page: Page, placeholders: list[str], content: str) -> str:
+        """填写首个可见输入框并返回命中的定位说明"""
+        last_error = None
+
+        for placeholder in placeholders:
+            try:
+                input_box = page.get_by_placeholder(placeholder).first
+                await input_box.wait_for(timeout=timeout_config.get_element_timeout())
+                if await input_box.is_visible():
+                    await input_box.click()
+                    await input_box.fill(content)
+                    return f"placeholder={placeholder}"
+            except Exception as e:
+                last_error = e
+                self.logger.debug(f"输入框未命中: {placeholder}, error: {str(e)}")
+
+        try:
+            textarea = page.locator(self.NOTES_TEXTAREA_SELECTOR).first
+            await textarea.wait_for(timeout=timeout_config.get_element_timeout())
+            if await textarea.is_visible():
+                await textarea.click()
+                await textarea.fill(content)
+                return f"selector={self.NOTES_TEXTAREA_SELECTOR}"
+        except Exception as e:
+            last_error = e
+            self.logger.debug(f"textarea 未命中: {self.NOTES_TEXTAREA_SELECTOR}, error: {str(e)}")
+
+        raise RuntimeError(
+            f"未找到可填写输入框，候选占位文本: {placeholders}，"
+            f"textarea 选择器: {self.NOTES_TEXTAREA_SELECTOR}，最后错误: {str(last_error)}"
+        )
+
+    async def _get_detail_page_text(self, detail_page: Page) -> str:
+        """获取详情页文本内容"""
+        body = detail_page.locator("body")
+        await body.wait_for(timeout=timeout_config.get_element_timeout())
+        return await body.inner_text()
 
     # ========== 导航方法 ==========
     async def navigate_to_contracting(self) -> None:
@@ -94,7 +134,7 @@ class RFPDetailPageProject(BasePage):
                 # Step 4: 等待页面加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach("Contracting 页面已加载", "导航结果")
-                self.logger.info("✅ Contracting 页面加载完成")
+                self.logger.info("Contracting 页面加载完成")
 
             except Exception as e:
                 error_msg = f"导航至 Contracting 页面失败: {str(e)}"
@@ -117,7 +157,7 @@ class RFPDetailPageProject(BasePage):
                 # 等待表格加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach(f"已选择: {self.STARTED_TAB_NAME}", "Tab 选择")
-                self.logger.info(f"✅ {self.STARTED_TAB_NAME} Tab 加载完成")
+                self.logger.info(f"{self.STARTED_TAB_NAME} Tab 加载完成")
 
             except Exception as e:
                 error_msg = f"点击 Started Tab 失败: {str(e)}"
@@ -180,7 +220,7 @@ class RFPDetailPageProject(BasePage):
                 # 等待签约页面加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach("Contract Signing 页面已打开", "操作结果")
-                self.logger.info("✅ Contract Signing 页面加载完成")
+                self.logger.info("Contract Signing 页面加载完成")
 
             except Exception as e:
                 error_msg = f"点击 Contract Signing 失败: {str(e)}"
@@ -203,7 +243,7 @@ class RFPDetailPageProject(BasePage):
                 # 等待页面加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach(f"已选择: {self.NEW_PROPOSAL_TAB_NAME}", "标签页选择")
-                self.logger.info(f"✅ {self.NEW_PROPOSAL_TAB_NAME} 标签页加载完成")
+                self.logger.info(f"{self.NEW_PROPOSAL_TAB_NAME} 标签页加载完成")
 
             except Exception as e:
                 error_msg = f"点击 New proposal 标签页失败: {str(e)}"
@@ -236,7 +276,7 @@ class RFPDetailPageProject(BasePage):
                 # 等待页面反应
                 await self.page.wait_for_timeout(500)
                 allure.attach("第一个酒店已选择", "酒店选择")
-                self.logger.info("✅ 酒店选择完成")
+                self.logger.info("酒店选择完成")
 
             except Exception as e:
                 error_msg = f"选择酒店失败: {str(e)}"
@@ -251,23 +291,20 @@ class RFPDetailPageProject(BasePage):
 
         with allure.step("点击 Detail 按钮打开详情页"):
             try:
-                # 点击 Detail 按钮 - 根据录制脚本使用
                 self.logger.debug(f"定位 {self.DETAIL_BUTTON_TEXT} 按钮")
                 detail_btn = self.page.get_by_role("button", name=self.DETAIL_BUTTON_TEXT)
+                await detail_btn.wait_for(timeout=timeout_config.get_element_timeout())
 
-                # 需要处理弹窗打开事件
-                # 使用 expect_popup() 等待弹窗
-                with self.page.expect_popup() as popup_info:
+                async with self.page.expect_popup() as popup_info:
                     await detail_btn.click()
-                    self.logger.info("Detail 按钮已点击，等待弹窗打开")
+                    self.logger.info("Detail 按钮已点击，等待新页面打开")
 
-                # 获取新弹窗 page
                 detail_page = await popup_info.value
-                self.logger.info("✅ 详情页弹窗已打开")
+                self.logger.info("详情页新页面已打开")
 
-                # 等待弹窗页面加载
+                await detail_page.wait_for_load_state("domcontentloaded")
                 await detail_page.wait_for_load_state("networkidle")
-                allure.attach("详情页弹窗已打开", "操作结果")
+                allure.attach("详情页新页面已打开", "操作结果")
 
                 return detail_page
 
@@ -283,15 +320,14 @@ class RFPDetailPageProject(BasePage):
 
         with allure.step("点击内部跟进备注按钮"):
             try:
-                # TODO: 使用待定的选择器定位备注按钮
-                self.logger.warning("⚠️  使用待定选择器定位内部跟进备注按钮")
+                clicked_button_name = await self._click_first_visible_button(
+                    detail_page,
+                    self.INTERNAL_NOTES_BUTTON_NAMES,
+                )
 
-                # 临时处理：这里会在后续补充具体定位器
-                # notes_btn = detail_page.locator(self.INTERNAL_NOTES_BUTTON_SELECTOR)
-                # await notes_btn.click()
-
-                allure.attach(f"待定：使用选择器 {self.INTERNAL_NOTES_BUTTON_SELECTOR}", "备注按钮定位")
-                self.logger.info("✅ 备注按钮点击完成（待定实现）")
+                await detail_page.wait_for_timeout(300)
+                allure.attach(f"已点击备注按钮: {clicked_button_name}", "备注按钮定位")
+                self.logger.info(f"备注按钮点击完成: {clicked_button_name}")
 
             except Exception as e:
                 error_msg = f"点击备注按钮失败: {str(e)}"
@@ -305,25 +341,23 @@ class RFPDetailPageProject(BasePage):
 
         with allure.step("填写备注内容"):
             try:
-                # 生成备注内容
                 if notes_content is None:
                     timestamp = self._generate_timestamp()
                     notes_content = f"hy-自动化书写文字-{timestamp}"
 
                 self.logger.debug(f"备注内容: {notes_content}")
 
-                # TODO: 使用待定的选择器定位备注输入框
-                self.logger.warning("⚠️  使用待定选择器定位备注输入框")
-
-                # 临时处理：这里会在后续补充具体定位器
-                # notes_input = detail_page.locator(self.NOTES_INPUT_SELECTOR)
-                # await notes_input.fill(notes_content)
+                matched_placeholder = await self._fill_first_visible_input(
+                    detail_page,
+                    self.NOTES_INPUT_PLACEHOLDERS,
+                    notes_content,
+                )
 
                 allure.attach(
-                    f"备注内容: {notes_content}\n待定：使用选择器 {self.NOTES_INPUT_SELECTOR}",
+                    f"备注内容: {notes_content}\n命中占位文本: {matched_placeholder}",
                     "备注填充"
                 )
-                self.logger.info(f"✅ 备注内容填充完成（待定实现）: {notes_content}")
+                self.logger.info(f"备注内容填充完成: {notes_content}")
 
                 return notes_content
 
@@ -339,18 +373,14 @@ class RFPDetailPageProject(BasePage):
 
         with allure.step("点击确定按钮保存备注"):
             try:
-                # TODO: 使用待定的选择器定位确定按钮
-                self.logger.warning("⚠️  使用待定选择器定位确定按钮")
+                clicked_button_name = await self._click_first_visible_button(
+                    detail_page,
+                    self.NOTES_CONFIRM_BUTTON_NAMES,
+                )
 
-                # 临时处理：这里会在后续补充具体定位器
-                # confirm_btn = detail_page.locator(self.NOTES_CONFIRM_BUTTON_SELECTOR)
-                # await confirm_btn.click()
-
-                # 等待操作完成
                 await detail_page.wait_for_timeout(500)
-
-                allure.attach(f"待定：使用选择器 {self.NOTES_CONFIRM_BUTTON_SELECTOR}", "确定按钮定位")
-                self.logger.info("✅ 备注确定按钮点击完成（待定实现）")
+                allure.attach(f"已点击确定按钮: {clicked_button_name}", "确定按钮定位")
+                self.logger.info(f"备注确定按钮点击完成: {clicked_button_name}")
 
             except Exception as e:
                 error_msg = f"点击确定按钮失败: {str(e)}"
@@ -371,7 +401,7 @@ class RFPDetailPageProject(BasePage):
                 # 等待页面加载完成
                 await detail_page.wait_for_load_state("networkidle")
                 allure.attach("详情页已刷新并加载完成", "刷新结果")
-                self.logger.info("✅ 详情页刷新完成")
+                self.logger.info("详情页刷新完成")
 
             except Exception as e:
                 error_msg = f"刷新详情页失败: {str(e)}"
@@ -385,24 +415,16 @@ class RFPDetailPageProject(BasePage):
 
         with allure.step(f"验证备注内容是否显示: {expected_notes}"):
             try:
-                # TODO: 使用待定的选择器定位备注显示区域
-                self.logger.warning("⚠️  使用待定选择器定位备注显示区域")
-
-                # 临时处理：这里会在后续补充具体定位器
-                # notes_display = detail_page.locator(self.NOTES_DISPLAY_AREA_SELECTOR)
-                # notes_text = await notes_display.text_content()
-                # is_visible = expected_notes in (notes_text or "")
-
-                is_visible = False  # 临时返回 False，等待具体实现
+                page_text = await self._get_detail_page_text(detail_page)
+                is_visible = expected_notes in page_text
 
                 allure.attach(
                     f"期望备注: {expected_notes}\n"
-                    f"验证结果: {is_visible}\n"
-                    f"待定：使用选择器 {self.NOTES_DISPLAY_AREA_SELECTOR}",
+                    f"验证结果: {is_visible}",
                     "备注验证"
                 )
 
-                self.logger.info(f"✅ 备注验证完成（待定实现）: {is_visible}")
+                self.logger.info(f"备注验证完成: {is_visible}")
                 return is_visible
 
             except Exception as e:
@@ -412,17 +434,21 @@ class RFPDetailPageProject(BasePage):
                 return False
 
     async def close_detail_page(self, detail_page: Page) -> None:
-        """关闭详情页弹窗"""
-        self.logger.info("开始关闭详情页弹窗")
+        """关闭详情页新页面"""
+        self.logger.info("开始关闭详情页新页面")
 
-        with allure.step("关闭详情页弹窗"):
+        with allure.step("关闭详情页新页面"):
             try:
-                # 关闭弹窗页面
-                await detail_page.close()
-                self.logger.info("详情页弹窗已关闭")
+                if detail_page.is_closed():
+                    self.logger.info("详情页新页面已关闭，跳过关闭操作")
+                    return
 
-                allure.attach("详情页弹窗已关闭", "关闭结果")
-                self.logger.info("✅ 弹窗关闭完成")
+                await detail_page.close()
+                self.logger.info("详情页新页面已关闭")
+
+                allure.attach("详情页新页面已关闭", "关闭结果")
+                self.logger.info("新页面关闭完成")
+
 
             except Exception as e:
                 error_msg = f"关闭详情页失败: {str(e)}"

@@ -55,83 +55,71 @@ class TestRFPDetailPageProject:
         """
         参数化的详情页内部跟进备注存储测试（登录状态复用）
 
-        Args:
+        Args：
             page_module: Module 级 page 对象 - 所有参数化用例共享（Module 级登录状态）
             operate_user: Operate 角色登录 fixture (来自 conftest.py)
             test_data: 参数化测试数据 (来自 rfp_management_params.json)
         """
-        # 初始化 POM 类
         detail_page = RFPDetailPageProject(page_module)
+        detail_popup = None
+        notes_content = None
 
-        with allure.step(f"用例: {test_data['description']}"):
-            # ========== Step 1-3: 导航到 Contracting 页面并选择 Started Tab ==========
-            with allure.step("导航至 Contracting 页面"):
-                await detail_page.navigate_to_contracting()
-                await detail_page.click_started_tab()
+        try:
+            with allure.step(f"用例: {test_data['description']}"):
+                with allure.step("导航至 Contracting 页面"):
+                    await detail_page.navigate_to_contracting()
+                    await detail_page.click_started_tab()
 
-            # ========== Step 4: 搜索项目 ==========
-            with allure.step(f"搜索项目（关键词: {test_data['search_keyword']}）"):
-                await detail_page.search_project_by_keyword(test_data['search_keyword'])
+                with allure.step(f"搜索项目（关键词: {test_data['search_keyword']}）"):
+                    await detail_page.search_project_by_keyword(test_data['search_keyword'])
 
-            # ========== Step 5: 点击 Contract Signing ==========
-            with allure.step("点击 Contract Signing 按钮"):
-                await detail_page.click_contract_signing()
+                with allure.step("点击 Contract Signing 按钮"):
+                    await detail_page.click_contract_signing()
 
-            # ========== Step 6: 选择 New proposal 标签页 ==========
-            with allure.step("选择 New proposal 标签页"):
-                await detail_page.click_new_proposal_tab()
+                with allure.step("选择 New proposal 标签页"):
+                    await detail_page.click_new_proposal_tab()
 
-            # ========== Step 7: 选择第一个酒店 ==========
-            with allure.step("选择第一个酒店"):
-                await detail_page.select_first_hotel()
+                with allure.step("选择第一个酒店"):
+                    await detail_page.select_first_hotel()
 
-            # ========== Step 8: 点击 Detail 按钮打开详情页弹窗 ==========
-            detail_popup = None
-            with allure.step("点击 Detail 按钮"):
-                detail_popup = await detail_page.click_detail_button()
+                with allure.step("点击 Detail 按钮"):
+                    detail_popup = await detail_page.click_detail_button()
 
-            # ========== Step 9: 点击内部跟进备注按钮 ==========
-            with allure.step("点击内部跟进备注按钮"):
-                await detail_page.click_internal_notes_button(detail_popup)
+                with allure.step("点击内部跟进备注按钮"):
+                    await detail_page.click_internal_notes_button(detail_popup)
 
-            # ========== Step 10: 添加备注内容 ==========
-            notes_content = None
-            with allure.step("填写备注内容"):
-                notes_content = await detail_page.fill_internal_notes(detail_popup)
+                with allure.step("填写备注内容"):
+                    notes_content = await detail_page.fill_internal_notes(detail_popup)
 
-            # ========== Step 11: 点击备注确定按钮 ==========
-            with allure.step("点击备注确定按钮"):
-                await detail_page.click_notes_confirm_button(detail_popup)
+                with allure.step("点击备注确定按钮"):
+                    await detail_page.click_notes_confirm_button(detail_popup)
 
-            # ========== Step 12: 刷新详情页 ==========
-            with allure.step("刷新详情页"):
-                await detail_page.refresh_detail_page(detail_popup)
+                with allure.step("刷新详情页"):
+                    await detail_page.refresh_detail_page(detail_popup)
 
-            # ========== Step 13: 验证备注内容 ==========
-            with allure.step("验证备注内容是否保存"):
-                notes_saved = await detail_page.verify_notes_in_detail_page(detail_popup, notes_content)
-                assert notes_saved, f"备注内容未保存：{notes_content}"
+                with allure.step("验证备注内容是否保存"):
+                    notes_saved = await detail_page.verify_notes_in_detail_page(detail_popup, notes_content)
+                    assert notes_saved, f"备注内容未保存：{notes_content}"
+
+                    allure.attach(
+                        f"备注内容保存成功\n"
+                        f"备注内容: {notes_content}",
+                        "验证结果",
+                        allure.attachment_type.TEXT
+                    )
 
                 allure.attach(
-                    f"备注内容保存成功\n"
-                    f"备注内容: {notes_content}",
-                    "验证结果",
+                    f"详情页内部跟进备注测试成功\n"
+                    f"用例ID: {test_data['case_id']}\n"
+                    f"用例描述: {test_data['description']}\n"
+                    f"搜索关键词: {test_data['search_keyword']}\n"
+                    f"项目名称: {test_data['project_name']}\n"
+                    f"备注内容: {notes_content}\n"
+                    f"测试结果: 保存成功✓",
+                    "测试结果",
                     allure.attachment_type.TEXT
                 )
-
-            # ========== Step 14: 关闭详情页弹窗 ==========
-            with allure.step("关闭详情页弹窗"):
-                await detail_page.close_detail_page(detail_popup)
-
-            # ========== Allure 最终报告 ==========
-            allure.attach(
-                f"详情页内部跟进备注测试成功\n"
-                f"用例ID: {test_data['case_id']}\n"
-                f"用例描述: {test_data['description']}\n"
-                f"搜索关键词: {test_data['search_keyword']}\n"
-                f"项目名称: {test_data['project_name']}\n"
-                f"备注内容: {notes_content}\n"
-                f"测试结果: 保存成功✓",
-                "测试结果",
-                allure.attachment_type.TEXT
-            )
+        finally:
+            if detail_popup is not None and not detail_popup.is_closed():
+                with allure.step("关闭详情页新页面"):
+                    await detail_page.close_detail_page(detail_popup)

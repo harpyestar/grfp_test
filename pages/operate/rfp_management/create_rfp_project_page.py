@@ -462,7 +462,7 @@ class CreateNewRFPProjectPage(BasePage):
                 # Step 4: 等待页面加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach("Contracting 页面已加载", "导航结果")
-                self.logger.info("✅ Contracting 页面加载完成")
+                self.logger.info("Contracting 页面加载完成")
 
             except Exception as e:
                 error_msg = f"导航至 Contracting 页面失败: {str(e)}"
@@ -485,7 +485,7 @@ class CreateNewRFPProjectPage(BasePage):
                 # 等待表格加载
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach(f"已选择: {self.NOT_STARTED_TAB_NAME}", "Tab 选择")
-                self.logger.info(f"✅ {self.NOT_STARTED_TAB_NAME} Tab 加载完成")
+                self.logger.info(f"{self.NOT_STARTED_TAB_NAME} Tab 加载完成")
 
             except Exception as e:
                 error_msg = f"点击 Not Started Tab 失败: {str(e)}"
@@ -561,7 +561,7 @@ class CreateNewRFPProjectPage(BasePage):
                 # Step 4: 等待操作完成
                 await self.page.wait_for_load_state("networkidle")
                 allure.attach("项目已删除", "删除结果")
-                self.logger.info("✅ 项目删除完成")
+                self.logger.info("项目删除完成")
 
             except Exception as e:
                 error_msg = f"删除项目失败: {str(e)}"
@@ -587,7 +587,7 @@ class CreateNewRFPProjectPage(BasePage):
                 # 4. 删除项目
                 await self.void_first_project()
 
-                self.logger.info(f"✅ 项目删除流程完成: {project_name}")
+                self.logger.info(f"项目删除流程完成: {project_name}")
             except Exception as e:
                 error_msg = f"项目删除流程失败: {str(e)}"
                 self.logger.error(error_msg)

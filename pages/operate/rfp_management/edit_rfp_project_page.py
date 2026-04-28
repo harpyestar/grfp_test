@@ -374,7 +374,7 @@ class EditRFPProjectPage(BasePage):
                 # 等待弹窗出现
                 await self.page.wait_for_timeout(500)
                 allure.attach("Start 按钮已点击，等待确认弹窗", "操作结果")
-                self.logger.info("✅ Start 按钮点击完成")
+                self.logger.info("Start 按钮点击完成")
 
             except Exception as e:
                 error_msg = f"点击 Start 按钮失败: {str(e)}"
