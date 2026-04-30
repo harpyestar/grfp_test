@@ -33,6 +33,10 @@ class EditRFPProjectPage(BasePage):
     START_BUTTON_TEXT = "Start"
     YES_CONFIRMATION_BUTTON_TEXT = "Yes"
 
+    # ========== LRA / NLRA 提示选项 ==========
+    LRA_NLRA_PROMPT_LABEL_TEXT = "Prompt when both LRA and NLRA quotes are successful"
+    LRA_NLRA_PROMPT_OPTION_SELECTOR = ".el-radio__label"
+
     # ========== 编辑页面 Tab 元素 ==========
     SAVE_BUTTON_NAME = "Save"
     PREVIOUS_STEP_BUTTON_NAME = "Previous step"
@@ -192,6 +196,28 @@ class EditRFPProjectPage(BasePage):
                 error_msg = f"搜索或打开项目失败: {str(e)}"
                 self.logger.error(error_msg)
                 allure.attach(error_msg, "搜索/打开错误")
+                raise
+
+    async def open_modify_project_from_search_result(self) -> None:
+        """点击首个 Modify Project 按钮并进入编辑页"""
+        self.logger.info("开始从搜索结果进入项目编辑页面")
+
+        with allure.step("点击首个 Modify Project 按钮"):
+            try:
+                self.logger.debug(f"定位并点击 {self.MODIFY_PROJECT_BUTTON_TEXT} 按钮（首个）")
+                modify_buttons = self.page.get_by_text(self.MODIFY_PROJECT_BUTTON_TEXT)
+                first_modify_btn = modify_buttons.first
+                await first_modify_btn.click()
+                self.logger.info("Modify Project 按钮已点击")
+
+                await self.page.wait_for_load_state("networkidle")
+                allure.attach("已进入项目编辑页面", "进入编辑页面")
+                self.logger.info("[OK] 项目编辑页面加载完成")
+
+            except Exception as e:
+                error_msg = f"进入项目编辑页面失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "进入编辑页错误")
                 raise
 
     # ========== Tab 切换与保存验证方法 ==========
@@ -408,6 +434,67 @@ class EditRFPProjectPage(BasePage):
                 self.logger.error(error_msg)
                 allure.attach(error_msg, "验证错误")
                 return False
+
+    async def get_lra_nlra_prompt_options(self) -> list[str]:
+        """获取 LRA/NLRA 提示项的所有单选选项文本"""
+        self.logger.info("开始获取 LRA/NLRA 提示项选项")
+
+        with allure.step("获取 LRA/NLRA 提示项选项文本"):
+            try:
+                prompt_item = self.page.locator(".el-form-item").filter(
+                    has_text=re.compile(re.escape(self.LRA_NLRA_PROMPT_LABEL_TEXT))
+                ).first
+                await prompt_item.wait_for(timeout=timeout_config.get_element_timeout())
+                self.logger.info("LRA/NLRA 提示项已定位")
+
+                option_locator = prompt_item.locator(self.LRA_NLRA_PROMPT_OPTION_SELECTOR)
+                option_count = await option_locator.count()
+                options = []
+
+                for index in range(option_count):
+                    option_text = await option_locator.nth(index).inner_text()
+                    options.append(option_text.strip())
+
+                allure.attach(
+                    f"选项数量: {option_count}\n选项内容: {options}",
+                    "LRA/NLRA 选项"
+                )
+                self.logger.info(f"获取到的 LRA/NLRA 选项: {options}")
+                return options
+
+            except Exception as e:
+                error_msg = f"获取 LRA/NLRA 提示项选项失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "获取选项错误")
+                raise
+
+    async def verify_lra_nlra_prompt_options(self, expected_options: list[str]) -> dict:
+        """验证 LRA/NLRA 提示项只包含期望选项"""
+        self.logger.info(f"开始验证 LRA/NLRA 提示项: {expected_options}")
+
+        with allure.step("验证 LRA/NLRA 提示项是否仅包含预期值"):
+            actual_options = await self.get_lra_nlra_prompt_options()
+            normalized_actual = [option.strip() for option in actual_options if option.strip()]
+            normalized_expected = [option.strip() for option in expected_options if option.strip()]
+
+            verification_result = {
+                "actual_options": normalized_actual,
+                "expected_options": normalized_expected,
+                "is_match": normalized_actual == normalized_expected,
+                "unique_count": len(set(normalized_actual)),
+                "actual_count": len(normalized_actual),
+            }
+
+            allure.attach(
+                f"实际选项: {normalized_actual}\n"
+                f"期望选项: {normalized_expected}\n"
+                f"是否匹配: {verification_result['is_match']}\n"
+                f"实际数量: {verification_result['actual_count']}\n"
+                f"去重后数量: {verification_result['unique_count']}",
+                "LRA/NLRA 选项验证"
+            )
+            self.logger.info(f"LRA/NLRA 提示项验证结果: {verification_result}")
+            return verification_result
 
     # ========== 完整流程方法 ==========
     async def test_all_tabs_save_functionality(self) -> dict:
