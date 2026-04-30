@@ -67,11 +67,11 @@ def browser(event_loop):
 def browser_context(browser, event_loop):
     """
     浏览器上下文 fixture（测试级）
-    每个测试获得独立的浏览器上下文
+    每个测试获得独立的浏览器上下文，默认全屏视口
     """
     async def create_context():
-        logger.info("Creating new browser context")
-        return await browser.new_context()
+        logger.info(f"Creating new browser context (viewport: {config.viewport})")
+        return await browser.new_context(viewport=config.viewport)
 
     context = event_loop.run_until_complete(create_context())
     yield context

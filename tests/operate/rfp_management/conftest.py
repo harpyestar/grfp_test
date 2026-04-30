@@ -31,9 +31,9 @@ def page_module(browser, event_loop):
     logger.info("Creating module-level page for login state reuse")
 
     async def create_module_page():
-        context = await browser.new_context()
+        context = await browser.new_context(viewport=config.viewport)
         page = await context.new_page()
-        logger.info("Module-level page created - ready for shared login state")
+        logger.info(f"Module-level page created (viewport: {config.viewport}) - ready for shared login state")
         return page, context
 
     _module_page, _module_context = event_loop.run_until_complete(create_module_page())

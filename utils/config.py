@@ -75,6 +75,18 @@ class Config:
         return int(os.getenv("TIMEOUT_NAVIGATION", "10000"))
 
     @property
+    def viewport_width(self) -> int:
+        return int(os.getenv("VIEWPORT_WIDTH", "1920"))
+
+    @property
+    def viewport_height(self) -> int:
+        return int(os.getenv("VIEWPORT_HEIGHT", "1080"))
+
+    @property
+    def viewport(self) -> dict:
+        return {"width": self.viewport_width, "height": self.viewport_height}
+
+    @property
     def allure_results_dir(self) -> str:
         return os.getenv("ALLURE_RESULTS_DIR", "reports/allure-results")
 
