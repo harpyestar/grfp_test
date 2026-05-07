@@ -395,20 +395,13 @@ class RFPContractingMapPage(BasePage):
                 allure.attach(error_msg, "导航错误")
                 raise
 
+
     # ======================================================================
     # 价格状态变更 - 视图模式切换
     # ======================================================================
 
-    VIEW_MODE_DROPDOWN_SELECTOR = "//div[@class='c-popper c-dropdown ml-10']"
-    LIST_MODE_OPTION_SELECTOR = "//div[contains(@class, 'c-dropdown')]//div[contains(text(), 'List')]"
-    MAP_MODE_OPTION_SELECTOR = "//div[contains(@class, 'c-dropdown')]//div[contains(text(), 'Map')]"
-
-    async def _open_view_mode_dropdown(self) -> None:
-        """打开视图模式切换下拉框"""
-        dropdown = self.page.locator(self.VIEW_MODE_DROPDOWN_SELECTOR)
-        await dropdown.wait_for(timeout=timeout_config.get_element_timeout())
-        await dropdown.click()
-        await self.page.wait_for_timeout(300)
+    LIST_MODE_ICON_SELECTOR = "span.iconfont.icon-list"
+    MAP_MODE_ICON_SELECTOR = "span.iconfont.icon-map"
 
     async def switch_to_list_mode(self) -> None:
         """切换至列表模式"""
@@ -416,10 +409,9 @@ class RFPContractingMapPage(BasePage):
 
         with allure.step("切换至列表模式"):
             try:
-                await self._open_view_mode_dropdown()
-                list_mode = self.page.locator(self.LIST_MODE_OPTION_SELECTOR)
-                await list_mode.wait_for(timeout=timeout_config.get_element_timeout())
-                await list_mode.click()
+                list_icon = self.page.locator(self.LIST_MODE_ICON_SELECTOR)
+                await list_icon.wait_for(timeout=timeout_config.get_element_timeout())
+                await list_icon.click()
                 await self.page.wait_for_timeout(300)
                 self.logger.info("[OK] 已切换至列表模式")
             except Exception as e:
@@ -434,10 +426,9 @@ class RFPContractingMapPage(BasePage):
 
         with allure.step("切换至地图模式"):
             try:
-                await self._open_view_mode_dropdown()
-                map_mode = self.page.locator(self.MAP_MODE_OPTION_SELECTOR)
-                await map_mode.wait_for(timeout=timeout_config.get_element_timeout())
-                await map_mode.click()
+                map_icon = self.page.locator(self.MAP_MODE_ICON_SELECTOR)
+                await map_icon.wait_for(timeout=timeout_config.get_element_timeout())
+                await map_icon.click()
                 await self.page.wait_for_timeout(300)
                 self.logger.info("[OK] 已切换至地图模式")
             except Exception as e:
@@ -450,9 +441,7 @@ class RFPContractingMapPage(BasePage):
     # 价格状态变更 - 导入签约状态
     # ======================================================================
 
-    IMPORT_STATUS_FILE_SELECTOR = (
-        "//div[contains(text(), 'Import')]/../../preceding-sibling::input[@type='file']"
-    )
+    IMPORT_STATUS_FILE_SELECTOR = "div.el-upload:has(button:has-text('Import Contracting Status')) input.el-upload__input"
 
     async def import_signing_status_file(self, excel_path: str) -> None:
         """导入签约状态 Excel 文件"""
@@ -462,7 +451,7 @@ class RFPContractingMapPage(BasePage):
             try:
                 file_input = self.page.locator(self.IMPORT_STATUS_FILE_SELECTOR)
                 await file_input.set_input_files(excel_path)
-                await self.page.wait_for_timeout(500)
+                await self.page.wait_for_timeout(timeout_config.get_quick_step_timeout())
                 self.logger.info("[OK] 签约状态文件已导入")
             except Exception as e:
                 error_msg = f"导入签约状态文件失败: {str(e)}"
@@ -474,7 +463,7 @@ class RFPContractingMapPage(BasePage):
     # 价格状态变更 - 价格状态页签
     # ======================================================================
 
-    PRICE_TAB_XPATH_FORMAT = "//div[@class='tab-wrap']//span[text()='{}']"
+    PRICE_TAB_XPATH_FORMAT = "//button//span[text()='{}']"
 
     async def click_price_status_tab(self, tab_name: str) -> None:
         """点击指定价格状态页签"""
@@ -502,7 +491,7 @@ class RFPContractingMapPage(BasePage):
     # ======================================================================
 
     HOTEL_LIST_ITEM_SELECTOR = (
-        "//div[@id='contentList']//div[contains(@class, 'border-bottom')]"
+        "//div[@class='list']//div[contains(@class, 'border-bottom')]"
     )
 
     async def click_first_hotel(self) -> None:
@@ -541,9 +530,9 @@ class RFPContractingMapPage(BasePage):
     # 价格状态变更 - 操作按钮
     # ======================================================================
 
-    REBID_BUTTON_TEXT = "Rebid"
-    ACCEPTED_BUTTON_TEXT = "Accepted"
-    REJECTED_BUTTON_TEXT = "Rejected"
+    REBID_BUTTON_TEXT = "Continue negotiating"
+    ACCEPTED_BUTTON_TEXT = "Accept"
+    REJECTED_BUTTON_TEXT = "Reject"
 
     async def click_rebid(self) -> None:
         """点击继续议价（Rebid）按钮"""
@@ -551,9 +540,7 @@ class RFPContractingMapPage(BasePage):
 
         with allure.step("点击 Rebid 按钮"):
             try:
-                btn = self.page.locator(
-                    f"//div[@class='btn-tr main mr-16' and contains(text(), '{self.REBID_BUTTON_TEXT}')]"
-                )
+                btn = self.page.get_by_role("button", name=self.REBID_BUTTON_TEXT)
                 await btn.wait_for(timeout=timeout_config.get_element_timeout())
                 await btn.click()
                 await self.page.wait_for_timeout(300)
@@ -570,9 +557,7 @@ class RFPContractingMapPage(BasePage):
 
         with allure.step("点击 Accepted 按钮"):
             try:
-                btn = self.page.locator(
-                    f"//div[@class='btn-tr main mr-16' and contains(text(), '{self.ACCEPTED_BUTTON_TEXT}')]"
-                )
+                btn = self.page.get_by_role("button", name=self.ACCEPTED_BUTTON_TEXT, exact=True)
                 await btn.wait_for(timeout=timeout_config.get_element_timeout())
                 await btn.click()
                 await self.page.wait_for_timeout(300)
@@ -589,9 +574,7 @@ class RFPContractingMapPage(BasePage):
 
         with allure.step("点击 Rejected 按钮"):
             try:
-                rejected_btn = self.page.get_by_text(
-                    self.REJECTED_BUTTON_TEXT, exact=True
-                )
+                rejected_btn = self.page.get_by_role("button", name=self.REJECTED_BUTTON_TEXT, exact=True)
                 await rejected_btn.wait_for(
                     timeout=timeout_config.get_element_timeout()
                 )
@@ -624,7 +607,7 @@ class RFPContractingMapPage(BasePage):
     # 价格状态变更 - 留言板
     # ======================================================================
 
-    MESSAGE_BOARD_SELECTOR = "//div[@class='w-100p c-asm']//textarea"
+    MESSAGE_BOARD_SELECTOR = "div.el-popover[aria-hidden='false'] textarea.el-textarea__inner"
 
     async def fill_message(self, message: str) -> None:
         """在留言板输入内容"""
@@ -650,6 +633,7 @@ class RFPContractingMapPage(BasePage):
     # 价格状态变更 - 确定按钮
     # ======================================================================
 
+    VISIBLE_POPOVER_SELECTOR = "div.el-popover[aria-hidden='false']"
     CONFIRM_BUTTON_TEXT = "Confirm"
 
     async def click_confirm(self) -> None:
@@ -658,9 +642,8 @@ class RFPContractingMapPage(BasePage):
 
         with allure.step("点击确定按钮"):
             try:
-                confirm_btn = self.page.get_by_text(
-                    self.CONFIRM_BUTTON_TEXT, exact=True
-                )
+                popover = self.page.locator(self.VISIBLE_POPOVER_SELECTOR)
+                confirm_btn = popover.get_by_role("button", name=self.CONFIRM_BUTTON_TEXT, exact=True)
                 await confirm_btn.wait_for(
                     timeout=timeout_config.get_element_timeout()
                 )

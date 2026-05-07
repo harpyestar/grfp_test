@@ -188,7 +188,7 @@ class TestRFPContractPriceStatus:
         # ===== 生成并导入签约状态 =====
         excel_file_name = f"RFP_import_signing_status_{case_id}.xlsx"
         excel_path = generate_signing_status_excel(
-            header=["房仓酒店id", "签约状态枚举值", "留言（文本最大500字符）"],
+            header=["HotelId", "Contract Status", "Remark"],
             data_rows=[[hotel_id, import_status, ""]],
             file_name=excel_file_name,
         )
@@ -203,6 +203,9 @@ class TestRFPContractPriceStatus:
 
         with allure.step(f"导入签约状态: {import_status}"):
             await map_page.import_signing_status_file(excel_path)
+
+        with allure.step("等待 导入签约 完成"):
+            await page_module.wait_for_timeout(timeout_config.get_quick_step_timeout())
 
         with allure.step("切换回地图模式"):
             await map_page.switch_to_map_mode()
