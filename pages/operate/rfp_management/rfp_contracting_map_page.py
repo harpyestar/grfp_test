@@ -368,3 +368,319 @@ class RFPContractingMapPage(BasePage):
                 self.logger.error(error_msg)
                 allure.attach(error_msg, "验证错误")
                 return False
+
+    # ======================================================================
+    # 价格状态变更 - 导航
+    # ======================================================================
+
+    HOME_PATH = "/home"
+
+    async def navigate_to_home(self) -> None:
+        """进入 /home 页面"""
+        self.logger.info("开始进入 /home 页面")
+
+        with allure.step("进入 /home 页面"):
+            try:
+                home_url = f"{config.base_url.rstrip('/')}{self.HOME_PATH}"
+                await self.page.goto(home_url, wait_until="domcontentloaded")
+                await self.wait_helper.wait_for_url(
+                    self.page,
+                    "**/home*",
+                    timeout=timeout_config.get_navigation_timeout(),
+                )
+                self.logger.info("[OK] 已进入 /home 页面")
+            except Exception as e:
+                error_msg = f"进入 /home 页面失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "导航错误")
+                raise
+
+    # ======================================================================
+    # 价格状态变更 - 视图模式切换
+    # ======================================================================
+
+    VIEW_MODE_DROPDOWN_SELECTOR = "//div[@class='c-popper c-dropdown ml-10']"
+    LIST_MODE_OPTION_SELECTOR = "//div[contains(@class, 'c-dropdown')]//div[contains(text(), 'List')]"
+    MAP_MODE_OPTION_SELECTOR = "//div[contains(@class, 'c-dropdown')]//div[contains(text(), 'Map')]"
+
+    async def _open_view_mode_dropdown(self) -> None:
+        """打开视图模式切换下拉框"""
+        dropdown = self.page.locator(self.VIEW_MODE_DROPDOWN_SELECTOR)
+        await dropdown.wait_for(timeout=timeout_config.get_element_timeout())
+        await dropdown.click()
+        await self.page.wait_for_timeout(300)
+
+    async def switch_to_list_mode(self) -> None:
+        """切换至列表模式"""
+        self.logger.info("切换至列表模式")
+
+        with allure.step("切换至列表模式"):
+            try:
+                await self._open_view_mode_dropdown()
+                list_mode = self.page.locator(self.LIST_MODE_OPTION_SELECTOR)
+                await list_mode.wait_for(timeout=timeout_config.get_element_timeout())
+                await list_mode.click()
+                await self.page.wait_for_timeout(300)
+                self.logger.info("[OK] 已切换至列表模式")
+            except Exception as e:
+                error_msg = f"切换至列表模式失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "列表模式错误")
+                raise
+
+    async def switch_to_map_mode(self) -> None:
+        """切换至地图模式"""
+        self.logger.info("切换至地图模式")
+
+        with allure.step("切换至地图模式"):
+            try:
+                await self._open_view_mode_dropdown()
+                map_mode = self.page.locator(self.MAP_MODE_OPTION_SELECTOR)
+                await map_mode.wait_for(timeout=timeout_config.get_element_timeout())
+                await map_mode.click()
+                await self.page.wait_for_timeout(300)
+                self.logger.info("[OK] 已切换至地图模式")
+            except Exception as e:
+                error_msg = f"切换至地图模式失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "地图模式错误")
+                raise
+
+    # ======================================================================
+    # 价格状态变更 - 导入签约状态
+    # ======================================================================
+
+    IMPORT_STATUS_FILE_SELECTOR = (
+        "//div[contains(text(), 'Import')]/../../preceding-sibling::input[@type='file']"
+    )
+
+    async def import_signing_status_file(self, excel_path: str) -> None:
+        """导入签约状态 Excel 文件"""
+        self.logger.info(f"导入签约状态文件: {excel_path}")
+
+        with allure.step("导入签约状态文件"):
+            try:
+                file_input = self.page.locator(self.IMPORT_STATUS_FILE_SELECTOR)
+                await file_input.set_input_files(excel_path)
+                await self.page.wait_for_timeout(500)
+                self.logger.info("[OK] 签约状态文件已导入")
+            except Exception as e:
+                error_msg = f"导入签约状态文件失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "导入错误")
+                raise
+
+    # ======================================================================
+    # 价格状态变更 - 价格状态页签
+    # ======================================================================
+
+    PRICE_TAB_XPATH_FORMAT = "//div[@class='tab-wrap']//span[text()='{}']"
+
+    async def click_price_status_tab(self, tab_name: str) -> None:
+        """点击指定价格状态页签"""
+        self.logger.info(f"点击价格状态页签: {tab_name}")
+
+        with allure.step(f"点击价格状态页签: {tab_name}"):
+            try:
+                price_tab = self.page.locator(
+                    self.PRICE_TAB_XPATH_FORMAT.format(tab_name)
+                )
+                await price_tab.wait_for(
+                    timeout=timeout_config.get_element_timeout()
+                )
+                await price_tab.click()
+                await self.page.wait_for_timeout(300)
+                self.logger.info(f"[OK] 已点击价格状态页签: {tab_name}")
+            except Exception as e:
+                error_msg = f"点击价格状态页签 [{tab_name}] 失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "价格页签错误")
+                raise
+
+    # ======================================================================
+    # 价格状态变更 - 酒店操作
+    # ======================================================================
+
+    HOTEL_LIST_ITEM_SELECTOR = (
+        "//div[@id='contentList']//div[contains(@class, 'border-bottom')]"
+    )
+
+    async def click_first_hotel(self) -> None:
+        """点击当前价格状态下的首个酒店"""
+        self.logger.info("点击首个酒店")
+
+        with allure.step("点击首个酒店"):
+            try:
+                first_hotel = self.page.locator(self.HOTEL_LIST_ITEM_SELECTOR).first
+                await first_hotel.wait_for(
+                    timeout=timeout_config.get_element_timeout()
+                )
+                await first_hotel.click()
+                await self.page.wait_for_timeout(300)
+                self.logger.info("[OK] 已点击首个酒店")
+            except Exception as e:
+                error_msg = f"点击首个酒店失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "酒店点击错误")
+                raise
+
+    async def verify_hotel_exists(self) -> bool:
+        """验证当前价格状态页签下是否存在酒店"""
+        self.logger.info("验证当前价格状态页签下是否存在酒店")
+        try:
+            hotel = self.page.locator(self.HOTEL_LIST_ITEM_SELECTOR).first
+            await hotel.wait_for(timeout=timeout_config.get_element_timeout())
+            is_visible = await hotel.is_visible()
+            self.logger.info(f"酒店存在: {is_visible}")
+            return is_visible
+        except Exception as e:
+            self.logger.error(f"未找到酒店: {str(e)}")
+            return False
+
+    # ======================================================================
+    # 价格状态变更 - 操作按钮
+    # ======================================================================
+
+    REBID_BUTTON_TEXT = "Rebid"
+    ACCEPTED_BUTTON_TEXT = "Accepted"
+    REJECTED_BUTTON_TEXT = "Rejected"
+
+    async def click_rebid(self) -> None:
+        """点击继续议价（Rebid）按钮"""
+        self.logger.info("点击 Rebid 按钮")
+
+        with allure.step("点击 Rebid 按钮"):
+            try:
+                btn = self.page.locator(
+                    f"//div[@class='btn-tr main mr-16' and contains(text(), '{self.REBID_BUTTON_TEXT}')]"
+                )
+                await btn.wait_for(timeout=timeout_config.get_element_timeout())
+                await btn.click()
+                await self.page.wait_for_timeout(300)
+                self.logger.info("[OK] 已点击 Rebid 按钮")
+            except Exception as e:
+                error_msg = f"点击 Rebid 按钮失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "Rebid 错误")
+                raise
+
+    async def click_accepted(self) -> None:
+        """点击中签（Accepted）按钮"""
+        self.logger.info("点击 Accepted 按钮")
+
+        with allure.step("点击 Accepted 按钮"):
+            try:
+                btn = self.page.locator(
+                    f"//div[@class='btn-tr main mr-16' and contains(text(), '{self.ACCEPTED_BUTTON_TEXT}')]"
+                )
+                await btn.wait_for(timeout=timeout_config.get_element_timeout())
+                await btn.click()
+                await self.page.wait_for_timeout(300)
+                self.logger.info("[OK] 已点击 Accepted 按钮")
+            except Exception as e:
+                error_msg = f"点击 Accepted 按钮失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "Accepted 按钮错误")
+                raise
+
+    async def click_rejected(self) -> None:
+        """点击否决（Rejected）按钮"""
+        self.logger.info("点击 Rejected 按钮")
+
+        with allure.step("点击 Rejected 按钮"):
+            try:
+                rejected_btn = self.page.get_by_text(
+                    self.REJECTED_BUTTON_TEXT, exact=True
+                )
+                await rejected_btn.wait_for(
+                    timeout=timeout_config.get_element_timeout()
+                )
+                await rejected_btn.click()
+                await self.page.wait_for_timeout(300)
+                self.logger.info("[OK] 已点击 Rejected 按钮")
+            except Exception as e:
+                error_msg = f"点击 Rejected 按钮失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "Rejected 按钮错误")
+                raise
+
+    async def click_action_by_type(self, action: str) -> None:
+        """根据动作类型点击对应的操作按钮
+
+        Args:
+            action: 操作类型，"Rebid" / "Accepted" / "Rejected"
+        """
+        action_map = {
+            "Rebid": self.click_rebid,
+            "Accepted": self.click_accepted,
+            "Rejected": self.click_rejected,
+        }
+        handler = action_map.get(action)
+        if handler is None:
+            raise ValueError(f"不支持的操作类型: {action}")
+        await handler()
+
+    # ======================================================================
+    # 价格状态变更 - 留言板
+    # ======================================================================
+
+    MESSAGE_BOARD_SELECTOR = "//div[@class='w-100p c-asm']//textarea"
+
+    async def fill_message(self, message: str) -> None:
+        """在留言板输入内容"""
+        self.logger.info(f"输入留言: {message}")
+
+        with allure.step(f"输入留言: {message}"):
+            try:
+                msg_input = self.page.locator(self.MESSAGE_BOARD_SELECTOR)
+                await msg_input.wait_for(
+                    timeout=timeout_config.get_element_timeout()
+                )
+                await msg_input.click()
+                await msg_input.fill(message)
+                await self.page.wait_for_timeout(200)
+                self.logger.info("[OK] 留言已输入")
+            except Exception as e:
+                error_msg = f"输入留言失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "留言输入错误")
+                raise
+
+    # ======================================================================
+    # 价格状态变更 - 确定按钮
+    # ======================================================================
+
+    CONFIRM_BUTTON_TEXT = "Confirm"
+
+    async def click_confirm(self) -> None:
+        """点击确定按钮"""
+        self.logger.info("点击确定按钮")
+
+        with allure.step("点击确定按钮"):
+            try:
+                confirm_btn = self.page.get_by_text(
+                    self.CONFIRM_BUTTON_TEXT, exact=True
+                )
+                await confirm_btn.wait_for(
+                    timeout=timeout_config.get_element_timeout()
+                )
+                await confirm_btn.click()
+                await self.page.wait_for_timeout(500)
+                self.logger.info("[OK] 已点击确定按钮")
+            except Exception as e:
+                error_msg = f"点击确定按钮失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "确定按钮错误")
+                raise
+
+    # ======================================================================
+    # 价格状态变更 - URL 验证
+    # ======================================================================
+
+    BID_EVALUATION_KEYWORD = "evaluation"
+
+    def url_contains_bid_evaluation(self, url: str) -> bool:
+        """判断 URL 是否包含去签约成功跳转标识"""
+        result = self.BID_EVALUATION_KEYWORD in url
+        self.logger.info(f"URL 包含 evaluation: {result}")
+        return result

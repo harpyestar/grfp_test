@@ -40,5 +40,133 @@
       "project_name": "hyg-测试项目-新加坡酒店类",
       "expected_options": ["turn off", "turn on"]
     }
+  ],
+  "rfp_contract_price_status": [
+    {
+      "case_id": "price_000",
+      "description": "已启动→去签约跳转验证",
+      "project_name": "自动化测试项目-价格变换"
+    },
+    {
+      "case_id": "price_001",
+      "description": "新标→议价中",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "New",
+      "initial_price_tab": "New proposal",
+      "action": "Rebid",
+      "target_price_tab": "Rebid",
+      "message": "修改价格状态：新标→议价中"
+    },
+    {
+      "case_id": "price_002",
+      "description": "新标→已中签",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "New",
+      "initial_price_tab": "New proposal",
+      "action": "Accepted",
+      "target_price_tab": "Accepted",
+      "message": "修改价格状态：新标→已中签"
+    },
+    {
+      "case_id": "price_003",
+      "description": "新标→否决",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "New",
+      "initial_price_tab": "New proposal",
+      "action": "Rejected",
+      "target_price_tab": "Rejected",
+      "message": "修改价格状态：新标→否决"
+    },
+    {
+      "case_id": "price_004",
+      "description": "议价中→已中签",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "Under Negotiation",
+      "initial_price_tab": "Rebid",
+      "action": "Accepted",
+      "target_price_tab": "Accepted",
+      "message": "修改价格状态：议价中→已中签"
+    },
+    {
+      "case_id": "price_005",
+      "description": "议价中→否决",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "Under Negotiation",
+      "initial_price_tab": "Rebid",
+      "action": "Rejected",
+      "target_price_tab": "Rejected",
+      "message": "修改价格状态：议价中→否决"
+    },
+    {
+      "case_id": "price_006",
+      "description": "修订报价→议价中",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "Updated Bid",
+      "initial_price_tab": "Proposal Revised",
+      "action": "Rebid",
+      "target_price_tab": "Rebid",
+      "message": "修改价格状态：修订报价→议价中"
+    },
+    {
+      "case_id": "price_007",
+      "description": "修订报价→已中签",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "Updated Bid",
+      "initial_price_tab": "Proposal Revised",
+      "action": "Accepted",
+      "target_price_tab": "Accepted",
+      "message": "修改价格状态：修订报价→已中签"
+    },
+    {
+      "case_id": "price_008",
+      "description": "修订报价→否决",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "Updated Bid",
+      "initial_price_tab": "Proposal Revised",
+      "action": "Rejected",
+      "target_price_tab": "Rejected",
+      "message": "修改价格状态：修订报价→否决"
+    },
+    {
+      "case_id": "price_009",
+      "description": "保持原价→议价中",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "Reject Negotiation",
+      "initial_price_tab": "Maintain Original Proposal",
+      "action": "Rebid",
+      "target_price_tab": "Rebid",
+      "message": "修改价格状态：保持原价→议价中"
+    },
+    {
+      "case_id": "price_010",
+      "description": "保持原价→已中签",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "Reject Negotiation",
+      "initial_price_tab": "Maintain Original Proposal",
+      "action": "Accepted",
+      "target_price_tab": "Accepted",
+      "message": "修改价格状态：保持原价→已中签"
+    },
+    {
+      "case_id": "price_011",
+      "description": "保持原价→否决",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_id": "463437",
+      "import_status": "Reject Negotiation",
+      "initial_price_tab": "Maintain Original Proposal",
+      "action": "Rejected",
+      "target_price_tab": "Rejected",
+      "message": "修改价格状态：保持原价→否决"
+    }
   ]
 }

@@ -75,6 +75,10 @@ class Config:
         return int(os.getenv("TIMEOUT_NAVIGATION", "10000"))
 
     @property
+    def timeout_quick_step(self) -> int:
+        return int(os.getenv("TIMEOUT_QUICK_STEP", "2000"))
+
+    @property
     def viewport_width(self) -> int:
         return int(os.getenv("VIEWPORT_WIDTH", "1920"))
 
