@@ -41,6 +41,10 @@ class RFPDetailPageProject(BasePage):
     NOTES_TEXTAREA_SELECTOR = ".el-dialog__body textarea.el-textarea__inner"
     NOTES_CONFIRM_BUTTON_NAMES = ["确定", "Confirm", "Save"]
 
+    # ========== 备注展开/收起元素 ==========
+    NOTES_EXPAND_BUTTON_TEXT = "Expand ▼"
+    NOTES_RETRACT_BUTTON_TEXT = "Retract ▲"
+
     def __init__(self, page: Page):
         super().__init__(page)
         self.logger = get_logger(self.__class__.__name__, config.log_level)
@@ -343,7 +347,8 @@ class RFPDetailPageProject(BasePage):
             try:
                 if notes_content is None:
                     timestamp = self._generate_timestamp()
-                    notes_content = f"hy-自动化书写文字-{timestamp}"
+                    # notes_content = f"hy-自动化书写文字-{timestamp}"
+                    notes_content = f"hy-自动化书写文字-{timestamp} \n hy-自动化书写文字-{timestamp}"
 
                 self.logger.debug(f"备注内容: {notes_content}")
 
@@ -432,6 +437,64 @@ class RFPDetailPageProject(BasePage):
                 self.logger.error(error_msg)
                 allure.attach(error_msg, "验证错误")
                 return False
+
+    async def verify_expand_button_exists(self, detail_page: Page) -> bool:
+        """验证详情页中备注展开按钮是否存在"""
+        self.logger.info("开始验证备注展开按钮是否存在")
+
+        with allure.step("验证备注展开按钮是否存在"):
+            try:
+                expand_button = detail_page.get_by_text(self.NOTES_EXPAND_BUTTON_TEXT)
+                exists = await expand_button.is_visible(timeout=timeout_config.get_element_timeout())
+
+                allure.attach(
+                    f"展开按钮文本: {self.NOTES_EXPAND_BUTTON_TEXT}\n"
+                    f"是否存在: {exists}",
+                    "展开按钮验证"
+                )
+
+                if exists:
+                    self.logger.info("备注展开按钮存在")
+                else:
+                    self.logger.info("备注展开按钮不存在")
+                return exists
+
+            except Exception as e:
+                self.logger.debug(f"展开按钮验证异常: {str(e)}")
+                allure.attach(f"展开按钮验证异常: {str(e)}", "验证异常")
+                return False
+
+    async def click_expand_and_verify_retract(self, detail_page: Page) -> bool:
+        """点击展开按钮，验证收起按钮存在"""
+        self.logger.info("开始点击展开按钮并验证收起按钮")
+
+        with allure.step("点击展开按钮并验证收起按钮"):
+            try:
+                # 点击展开按钮
+                expand_button = detail_page.get_by_text(self.NOTES_EXPAND_BUTTON_TEXT)
+                await expand_button.click()
+                self.logger.info("展开按钮已点击")
+                await detail_page.wait_for_timeout(300)
+
+                # 验证收起按钮存在
+                retract_button = detail_page.get_by_text(self.NOTES_RETRACT_BUTTON_TEXT)
+                retract_exists = await retract_button.is_visible(timeout=timeout_config.get_element_timeout())
+
+                allure.attach(
+                    f"展开按钮: {self.NOTES_EXPAND_BUTTON_TEXT} 已点击\n"
+                    f"收起按钮: {self.NOTES_RETRACT_BUTTON_TEXT}\n"
+                    f"收起按钮是否存在: {retract_exists}",
+                    "展开/收起验证"
+                )
+
+                self.logger.info(f"收起按钮存在: {retract_exists}")
+                return retract_exists
+
+            except Exception as e:
+                error_msg = f"展开/收起按钮操作失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "操作错误")
+                raise
 
     async def close_detail_page(self, detail_page: Page) -> None:
         """关闭详情页新页面"""
