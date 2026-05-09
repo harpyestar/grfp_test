@@ -47,6 +47,24 @@
       "expected_options": ["turn off", "turn on"]
     }
   ],
+  "rfp_cancel_policy_wording": [
+    {
+      "case_id": "cancel_001",
+      "description": "取消条款展示 - 英文模式下验证 in advance before",
+      "search_keyword": "自动化测试项目-价格页签固定酒店项-勿修改任何价格变动",
+      "project_name": "自动化测试项目-价格页签固定酒店项-勿修改任何价格变动",
+      "language": "English",
+      "expected_text": "in advance before"
+    },
+    {
+      "case_id": "cancel_002",
+      "description": "取消条款展示 - 中文模式下验证 提前",
+      "search_keyword": "自动化测试项目-价格页签固定酒店项-勿修改任何价格变动",
+      "project_name": "自动化测试项目-价格页签固定酒店项-勿修改任何价格变动",
+      "language": "中文",
+      "expected_text": "提前"
+    }
+  ],
   "rfp_contract_price_status": [
     {
       "case_id": "price_000",

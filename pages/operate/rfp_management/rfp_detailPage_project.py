@@ -45,6 +45,16 @@ class RFPDetailPageProject(BasePage):
     NOTES_EXPAND_BUTTON_TEXT = "Expand ▼"
     NOTES_RETRACT_BUTTON_TEXT = "Retract ▲"
 
+    # ========== 语言切换元素 ==========
+    LANGUAGE_BUTTON_SELECTOR = "div:has(> span.iconfont.icon-global)"
+    LANGUAGE_DROPDOWN_EN_TEXT = "English"
+    LANGUAGE_DROPDOWN_ZH_TEXT = "中文"
+
+    # ========== 报价信息栏元素 ==========
+    QUOTATION_INFORMATION_TEXT_OPTIONS = ["Quotation Information", "报价信息"]
+    REFUND_POLICY_TEXT_OPTIONS = ["Refund policy", "退款政策"]
+    REFUND_POLICY_TEXT = "Refund policy"
+
     def __init__(self, page: Page):
         super().__init__(page)
         self.logger = get_logger(self.__class__.__name__, config.log_level)
@@ -495,6 +505,109 @@ class RFPDetailPageProject(BasePage):
                 self.logger.error(error_msg)
                 allure.attach(error_msg, "操作错误")
                 raise
+
+    # ========== 语言切换方法 ==========
+    async def switch_language(self, target_language: str, page: Page = None) -> None:
+        """切换 UI 语言
+
+        Args:
+            target_language: 目标语言 "English" 或 "中文"
+            page: 目标页面，默认使用 self.page（主页面），传入 detail_page 则在弹窗内切换
+        """
+        target = page or self.page
+        self.logger.info(f"开始切换语言至: {target_language}")
+
+        with allure.step(f"切换语言至: {target_language}"):
+            try:
+                # 点击语言切换图标父容器（基于 icon-global 向上定位）
+                lang_button = target.locator(self.LANGUAGE_BUTTON_SELECTOR).first
+                await lang_button.wait_for(timeout=timeout_config.get_quick_step_timeout())
+                await lang_button.click()
+                self.logger.debug("语言切换按钮已点击")
+
+                await target.wait_for_timeout(300)
+
+                # 从下拉菜单中选择目标语言
+                if target_language == "English":
+                    await target.get_by_text(self.LANGUAGE_DROPDOWN_EN_TEXT, exact=True).first.click()
+                elif target_language == "中文":
+                    await target.get_by_text(self.LANGUAGE_DROPDOWN_ZH_TEXT, exact=True).first.click()
+                else:
+                    raise ValueError(f"不支持的语言: {target_language}")
+
+                await target.wait_for_load_state("networkidle")
+                allure.attach(f"已切换语言至: {target_language}", "语言切换")
+                self.logger.info(f"语言切换完成: {target_language}")
+
+            except Exception as e:
+                error_msg = f"语言切换失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "语言切换错误")
+                raise
+
+    # ========== 报价信息栏方法 ==========
+    async def scroll_to_quotation_information(self, detail_page: Page) -> None:
+        """滚动至报价信息栏（Quotation Information/报价信息）"""
+        self.logger.info("开始滚动至报价信息栏")
+
+        with allure.step("滚动至 Quotation Information 区域"):
+            last_error = None
+            for text_option in self.QUOTATION_INFORMATION_TEXT_OPTIONS:
+                try:
+                    quotation_section = detail_page.get_by_text(text_option).first
+                    await quotation_section.wait_for(timeout=timeout_config.get_quick_step_timeout())
+                    await quotation_section.scroll_into_view_if_needed()
+                    await detail_page.wait_for_timeout(500)
+
+                    allure.attach(f"已滚动至: {text_option}", "滚动操作")
+                    self.logger.info(f"滚动至报价信息栏完成: {text_option}")
+                    return
+                except Exception as e:
+                    last_error = e
+                    self.logger.debug(f"报价信息文本未命中: {text_option}, error: {str(e)}")
+
+            error_msg = f"滚动至报价信息栏失败，候选文本: {self.QUOTATION_INFORMATION_TEXT_OPTIONS}，最后错误: {str(last_error)}"
+            self.logger.error(error_msg)
+            allure.attach(error_msg, "滚动错误")
+            raise
+
+    async def verify_refund_policy_contains_text(self, detail_page: Page, expected_text: str) -> bool:
+        """验证退款政策文本是否包含预期文字"""
+        self.logger.info(f"开始验证退款政策文本: {expected_text}")
+
+        with allure.step(f"验证退款政策文本是否包含: {expected_text}"):
+            last_error = None
+            for text_option in self.REFUND_POLICY_TEXT_OPTIONS:
+                try:
+                    refund_policy = detail_page.get_by_text(text_option).first
+                    await refund_policy.wait_for(timeout=timeout_config.get_element_timeout())
+
+                    parent = refund_policy.locator("..")
+                    section_text = await parent.inner_text()
+
+                    contains_expected = expected_text in section_text
+
+                    allure.attach(
+                        f"命中文本: {text_option}\n"
+                        f"区域文本: {section_text}\n"
+                        f"预期文字: {expected_text}\n"
+                        f"是否包含: {contains_expected}",
+                        "退款政策验证"
+                    )
+
+                    self.logger.info(f"退款政策文本验证结果: {contains_expected}")
+                    return contains_expected
+                except Exception as e:
+                    last_error = e
+                    self.logger.debug(f"退款政策文本未命中: {text_option}, error: {str(e)}")
+
+            error_msg = (
+                f"验证退款政策文本失败，候选文本: {self.REFUND_POLICY_TEXT_OPTIONS}，"
+                f"最后错误: {str(last_error)}"
+            )
+            self.logger.error(error_msg)
+            allure.attach(error_msg, "验证错误")
+            raise RuntimeError(error_msg)
 
     async def close_detail_page(self, detail_page: Page) -> None:
         """关闭详情页新页面"""

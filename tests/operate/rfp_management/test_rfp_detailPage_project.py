@@ -12,6 +12,7 @@ from utils.test_data_loader import TestDataLoader
 test_cases = TestDataLoader.load_params("rfp_management_params.json", "rfp_detail_page")
 add_notes_cases = [tc for tc in test_cases if tc["case_id"] == "detail_001"]
 expand_collapse_cases = [tc for tc in test_cases if tc["case_id"] == "detail_002"]
+cancel_policy_cases = TestDataLoader.load_params("rfp_management_params.json", "rfp_cancel_policy_wording")
 
 
 @allure.feature("RFP 项目管理")
@@ -207,5 +208,90 @@ class TestRFPDetailPageProject:
                 with allure.step("关闭详情页新页面"):
                     await detail_page.close_detail_page(detail_popup)
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "test_data",
+        cancel_policy_cases,
+        ids=[tc["case_id"] for tc in cancel_policy_cases]
+    )
+    @allure.title("报价详情页 - 取消条款展示文案验证")
+    @allure.description("""
+    测试: Operate 角色在报价详情页中验证取消条款展示文案包含 "提前" / "in advance before"
 
+    测试步骤:
+    1. 使用 operate 角色账号登录 (fixture 自动完成，仅一次)
+    2. 根据参数化数据切换语言（英文/中文）
+    3. 导航至 Contracting 页面
+    4. 选择 Started Tab
+    5. 搜索项目
+    6. 点击第一个项目的 Contract Signing 按钮
+    7. 进入签约页面，选择 New proposal 标签页
+    8. 选择第一个酒店
+    9. 点击 Detail 按钮打开详情页弹窗
+    10. 滚动至 Quotation Information 区域
+    11. 验证 Refund policy 文本包含预期文字
 
+    预期结果: 退款政策文本中包含 "in advance before"（英文）或 "提前"（中文）
+    """)
+    async def test_verify_cancel_policy_wording(self, page_module, operate_user, test_data):
+        """
+        参数化的取消条款展示文案验证测试（登录状态复用）
+
+        Args:
+            page_module: Module 级 page 对象
+            operate_user: Operate 角色登录 fixture
+            test_data: 参数化测试数据
+        """
+        detail_page = RFPDetailPageProject(page_module)
+        detail_popup = None
+
+        try:
+            with allure.step(f"用例: {test_data['description']}"):
+
+                with allure.step("导航至 Contracting 页面"):
+                    await detail_page.navigate_to_contracting()
+                    await detail_page.click_started_tab()
+
+                with allure.step(f"搜索项目（关键词: {test_data['search_keyword']}）"):
+                    await detail_page.search_project_by_keyword(test_data['search_keyword'])
+
+                with allure.step("点击 Contract Signing 按钮"):
+                    await detail_page.click_contract_signing()
+
+                with allure.step("选择 New proposal 标签页"):
+                    await detail_page.click_new_proposal_tab()
+
+                with allure.step("选择第一个酒店"):
+                    await detail_page.select_first_hotel()
+
+                with allure.step("点击 Detail 按钮"):
+                    detail_popup = await detail_page.click_detail_button()
+
+                with allure.step(f"切换语言至: {test_data['language']}"):
+                    await detail_page.switch_language(test_data['language'], page=detail_popup)
+
+                with allure.step("滚动至 Quotation Information 区域"):
+                    await detail_page.scroll_to_quotation_information(detail_popup)
+
+                with allure.step(f"验证退款政策文本包含: {test_data['expected_text']}"):
+                    contains = await detail_page.verify_refund_policy_contains_text(
+                        detail_popup, test_data['expected_text']
+                    )
+                    assert contains, (
+                        f"退款政策文本未包含预期文字: {test_data['expected_text']}"
+                    )
+
+                allure.attach(
+                    f"取消条款展示文案验证成功\n"
+                    f"用例ID: {test_data['case_id']}\n"
+                    f"用例描述: {test_data['description']}\n"
+                    f"语言: {test_data['language']}\n"
+                    f"预期文字: {test_data['expected_text']}\n"
+                    f"验证结果: 包含 ✓",
+                    "测试结果",
+                    allure.attachment_type.TEXT
+                )
+        finally:
+            if detail_popup is not None and not detail_popup.is_closed():
+                with allure.step("关闭详情页新页面"):
+                    await detail_page.close_detail_page(detail_popup)
