@@ -4,7 +4,7 @@
 所有超时值从 timeout_config 中读取，所有选择器统一在类变量中定义
 """
 
-from playwright.async_api import Page
+from playwright.async_api import Page, Download
 from pages.common.base_page import BasePage
 from utils.config import config
 from utils.timeout_config import timeout_config
@@ -57,6 +57,15 @@ class EditRFPProjectPage(BasePage):
         "Lanyon Display Settings",
         "Historical Transaction Data"
     ]
+
+    # ========== 邀请酒店 Tab 导出元素 ==========
+    INVITED_HOTEL_TAB_NAME = "Invited Hotel"
+    SELECT_ALL_CHECKBOX_SELECTOR = "th.el-table-column--selection .el-checkbox"
+    EXPORT_BUTTON_TEXT = "Export"
+    ADD_PREFERRED_HOTELS_GROUP_TEXT = "Add preferred hotels group"
+
+    # ========== URL 项目 ID 提取 ==========
+    PROJECT_ID_PATTERN = re.compile(r'projectId=(\d+)')
 
     def __init__(self, page: Page):
         super().__init__(page)
@@ -495,6 +504,119 @@ class EditRFPProjectPage(BasePage):
             )
             self.logger.info(f"LRA/NLRA 提示项验证结果: {verification_result}")
             return verification_result
+
+    # ========== 酒店导出相关方法 ==========
+    async def get_project_id_from_url(self) -> str:
+        """
+        从编辑页面 URL 中提取项目 ID
+
+        Returns:
+            str: 项目 ID
+        """
+        url = self.page.url
+        self.logger.info(f"当前编辑页 URL: {url}")
+
+        match = self.PROJECT_ID_PATTERN.search(url)
+        if match:
+            project_id = match.group(1)
+            self.logger.info(f"提取到项目 ID: {project_id}")
+            allure.attach(f"项目 ID: {project_id}", "项目 ID")
+            return project_id
+        else:
+            error_msg = f"无法从 URL 中提取项目 ID: {url}"
+            self.logger.error(error_msg)
+            allure.attach(error_msg, "URL 解析错误")
+            raise ValueError(error_msg)
+
+    async def click_select_all_checkbox(self) -> None:
+        """点击邀请酒店表格表头的全选复选框"""
+        self.logger.info("开始点击全选复选框")
+
+        with allure.step("点击全选复选框"):
+            try:
+                checkbox = self.page.locator(self.SELECT_ALL_CHECKBOX_SELECTOR)
+                await checkbox.wait_for(timeout=timeout_config.get_element_timeout())
+                await checkbox.click()
+                self.logger.info("[OK] 全选复选框已点击")
+            except Exception as e:
+                error_msg = f"点击全选复选框失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "点击错误")
+                raise
+
+    async def export_normal_hotel_list(self) -> Download:
+        """
+        在 Invited Hotel Tab 中点击 Export 导出普通酒店名单
+
+        Returns:
+            Download: Playwright Download 对象
+        """
+        self.logger.info("开始导出普通酒店名单")
+
+        with allure.step("导出普通酒店名单"):
+            try:
+                async with self.page.expect_download() as download_info:
+                    export_btn = self.page.get_by_text(self.EXPORT_BUTTON_TEXT)
+                    await export_btn.wait_for(timeout=timeout_config.get_element_timeout())
+                    await export_btn.click()
+
+                download = await download_info.value
+                self.logger.info(f"普通酒店名单导出完成: {download.suggested_filename}")
+                allure.attach(f"导出文件名: {download.suggested_filename}", "导出文件")
+                return download
+
+            except Exception as e:
+                error_msg = f"导出普通酒店名单失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "导出错误")
+                raise
+
+    async def click_add_group_intent_hotel_button(self) -> None:
+        """点击 Add preferred hotels group 按钮，展开集团意向单店区域"""
+        self.logger.info("开始点击 Add preferred hotels group 按钮")
+
+        with allure.step("点击 Add preferred hotels group"):
+            try:
+                add_btn = self.page.get_by_role("button", name=self.ADD_PREFERRED_HOTELS_GROUP_TEXT)
+                await add_btn.wait_for(timeout=timeout_config.get_element_timeout())
+                await add_btn.click()
+                await self.page.wait_for_timeout(500)
+                self.logger.info("[OK] 已点击 Add preferred hotels group 按钮")
+            except Exception as e:
+                error_msg = f"点击 Add preferred hotels group 按钮失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "点击错误")
+                raise
+
+    async def export_group_hotel_list(self) -> Download:
+        """
+        点击 Add preferred hotels group 后，点击 Export 导出集团酒店名单
+
+        Returns:
+            Download: Playwright Download 对象
+        """
+        self.logger.info("开始导出集团酒店名单")
+
+        with allure.step("导出集团酒店名单"):
+            try:
+                # 等待集团区域加载
+                await self.page.wait_for_timeout(1000)
+
+                async with self.page.expect_download() as download_info:
+                    export_btn = self.page.get_by_text(self.EXPORT_BUTTON_TEXT)
+                    await export_btn.wait_for(timeout=timeout_config.get_element_timeout())
+                    await export_btn.click()
+
+                download = await download_info.value
+                self.logger.info(f"集团酒店名单导出完成: {download.suggested_filename}")
+                allure.attach(f"导出文件名: {download.suggested_filename}", "导出文件")
+                return download
+
+            except Exception as e:
+                error_msg = f"导出集团酒店名单失败: {str(e)}"
+                self.logger.error(error_msg)
+                allure.attach(error_msg, "导出错误")
+                raise
 
     # ========== 完整流程方法 ==========
     async def test_all_tabs_save_functionality(self) -> dict:

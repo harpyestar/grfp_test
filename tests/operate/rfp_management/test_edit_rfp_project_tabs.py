@@ -1,16 +1,23 @@
 """
 编辑 RFP 项目 Tab 保存功能测试
 测试场景: 验证 RFP 项目编辑页面中每个 Tab 的保存功能是否成功
+         验证导出的邀约酒店名单包含酒店 ID 字段且数据与数据库一致
 """
+import asyncio
 import time
 
 import pytest
 import allure
 from pages.operate.rfp_management.edit_rfp_project_page import EditRFPProjectPage
+from utils.mysql_db import get_normal_hotels, get_group_hotels
+from utils.excel_utils import verify_exported_hotel_excel
 from utils.test_data_loader import TestDataLoader
 
 lra_nlra_prompt_cases = TestDataLoader.load_params(
     "rfp_management_params.json", "rfp_lra_nlra_prompt_options"
+)
+export_hotel_cases = TestDataLoader.load_params(
+    "rfp_management_params.json", "export_hotel_list"
 )
 
 
@@ -249,3 +256,83 @@ class TestEditRFPProjectTabs:
         - 测试状态: 通过 ✓
         """
         allure.attach(result_report, "测试结果", allure.attachment_type.TEXT)
+
+    # ======================== 导出邀约酒店名单验证测试（普通/集团）=======================
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "test_data",
+        export_hotel_cases,
+        ids=[tc["case_id"] for tc in export_hotel_cases]
+    )
+    @allure.title("导出{test_data['export_type']}酒店名单包含酒店ID字段 - {test_data['description']}")
+    @allure.description("""
+    测试: Operate 角色进入已启动项目的编辑页，在 Invited Hotel Tab 中导出酒店名单，
+    验证导出的 Excel 包含酒店 ID 字段，且数据与数据库查询结果一致。
+
+    流程: 导航 → Started Tab → 搜索项目 → Modify Project → 提取项目ID → 查DB
+          → Invited Hotel Tab → 导出 → 验证Excel
+          （集团类型额外：点击 Add preferred hotels group → 再导出）
+    """)
+    async def test_export_hotel_list_includes_hotel_id(self, page_module, operate_user, test_data):
+        """
+        验证导出的酒店名单包含酒店 ID 字段且数据一致（普通/集团共用）
+
+        Args:
+            page_module: Module 级 page 对象
+            operate_user: Operate 角色登录 fixture
+            test_data: 参数化测试数据 {project_name, export_type, description}
+        """
+        project_name = test_data["project_name"]
+        export_type = test_data["export_type"]
+        sheet_label = "普通酒店名单" if export_type == "normal" else "集团酒店名单"
+        edit_page = EditRFPProjectPage(page_module)
+
+        with allure.step("【步骤 1】导航至 RFP Management > Contracting 页面"):
+            await edit_page.navigate_to_contracting()
+
+        with allure.step("【步骤 2】选择 Started Tab"):
+            await edit_page.click_started_tab()
+
+        with allure.step(f"【步骤 3】搜索项目并进入编辑页: {project_name}"):
+            await edit_page.search_and_open_project(project_name)
+
+        with allure.step("【步骤 4】提取项目 ID，查询数据库"):
+            project_id = await edit_page.get_project_id_from_url()
+            query_fn = get_normal_hotels if export_type == "normal" else get_group_hotels
+            db_data = await asyncio.to_thread(query_fn, project_id)
+            assert len(db_data) > 0, \
+                f"数据库未查询到{sheet_label}记录 (project_id={project_id})"
+
+        with allure.step("【步骤 5】进入 Invited Hotel Tab"):
+            await edit_page.click_tab(edit_page.INVITED_HOTEL_TAB_NAME)
+
+        # 普通类型：需要先点击全选复选框，才能导出
+        if export_type == "normal":
+            with allure.step("【步骤 5a】点击全选复选框"):
+                await edit_page.click_select_all_checkbox()
+
+        # 集团类型：需要先点击 Add preferred hotels group
+        if export_type == "group":
+            with allure.step("【步骤 5b】点击 Add preferred hotels group"):
+                await edit_page.click_add_group_intent_hotel_button()
+
+        with allure.step(f"【步骤 6】导出{sheet_label}"):
+            if export_type == "normal":
+                download = await edit_page.export_normal_hotel_list()
+            else:
+                download = await edit_page.export_group_hotel_list()
+
+        with allure.step(f"【步骤 7】验证{sheet_label} Excel"):
+            await verify_exported_hotel_excel(download, db_data, sheet_label)
+
+        # 生成报告
+        report = f"""
+        [OK] {sheet_label}导出验证完成
+        - 项目名称: {project_name}
+        - 项目 ID: {project_id}
+        - 类型: {export_type}
+        - 数据库记录数: {len(db_data)}
+        - 验证结果: 通过 ✓
+        """
+        allure.attach(report, "测试报告", allure.attachment_type.TEXT)

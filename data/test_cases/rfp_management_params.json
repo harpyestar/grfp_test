@@ -65,6 +65,20 @@
       "expected_text": "提前"
     }
   ],
+  "export_hotel_list": [
+    {
+      "case_id": "export_001",
+      "description": "导出普通酒店名单验证酒店ID字段",
+      "project_name": "自动化测试项目-价格页签固定酒店项",
+      "export_type": "normal"
+    },
+    {
+      "case_id": "export_002",
+      "description": "导出集团酒店名单验证酒店ID字段",
+      "project_name": "自动化测试项目-价格页签固定酒店项",
+      "export_type": "group"
+    }
+  ],
   "rfp_contract_price_status": [
     {
       "case_id": "price_000",
