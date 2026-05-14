@@ -206,5 +206,19 @@
       "target_price_tab": "Rejected",
       "message": "修改价格状态：保持原价→否决"
     }
+  ],
+  "e2e_price_status_flow": [
+    {
+      "case_id": "e2e_001",
+      "description": "平台端→酒店端→平台端 完整价格状态流转",
+      "project_name": "自动化测试项目-价格变换",
+      "hotel_name": "Shangri-La Hotel Hefei",
+      "hotel_id": "463437",
+      "import_status": "Under Negotiation",
+      "phase3_initial_tab": "Proposal Revised",
+      "action": "Accepted",
+      "phase3_target_tab": "Accepted",
+      "message": "E2E自动化测试：酒店修改报价后中签"
+    }
   ]
 }
